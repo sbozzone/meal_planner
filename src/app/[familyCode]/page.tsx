@@ -6,9 +6,11 @@ import { WeekNavigation } from "@/components/meal-plan/WeekNavigation";
 import { DayCard } from "@/components/meal-plan/DayCard";
 import { DishPicker } from "@/components/meal-plan/DishPicker";
 import { DishForm } from "@/components/dishes/DishForm";
+import { PrintSheet } from "@/components/print/PrintSheet";
 import { useWeekNavigation } from "@/hooks/useWeekNavigation";
 import { useMealPlan } from "@/hooks/useMealPlan";
 import { useDishes } from "@/hooks/useDishes";
+import { useShoppingList } from "@/hooks/useShoppingList";
 import { useFamily } from "@/lib/family-context";
 import type { Dish } from "@/types/database";
 
@@ -19,6 +21,7 @@ export default function MealPlanPage() {
   const { days, loading, assignDish, removeMeal, clearWeek } =
     useMealPlan(weekStart);
   const { dishes, addDish } = useDishes();
+  const { items } = useShoppingList();
 
   const [pickerDate, setPickerDate] = useState<string | null>(null);
   const [pendingDate, setPendingDate] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export default function MealPlanPage() {
         confirmClear={confirmClear}
       />
 
-      <main className="px-4 pb-4 max-w-3xl mx-auto">
+      <main className="px-4 pb-4 max-w-3xl mx-auto print:hidden">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 7 }).map((_, i) => (
@@ -86,6 +89,13 @@ export default function MealPlanPage() {
           </div>
         )}
       </main>
+
+      <PrintSheet
+        familyName={family.name}
+        weekLabel={weekLabel}
+        days={days}
+        items={items}
+      />
 
       <DishPicker
         open={pickerDate !== null}

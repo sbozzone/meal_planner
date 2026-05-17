@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useFamily } from "@/lib/family-context";
+import { createClient } from "@/lib/supabase/client";
 import { getWeekDays } from "@/lib/utils";
 import type { MealPlan, DayPlan } from "@/types/database";
 
@@ -27,6 +28,20 @@ export function useMealPlan(weekStart: string) {
   useEffect(() => {
     fetchMeals();
   }, [fetchMeals]);
+
+  // Realtime subscription
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`meal-plans-${family.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "meal_plans", filter: `family_id=eq.${family.id}` },
+        () => { fetchMeals(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const days: DayPlan[] = getWeekDays(weekStart).map((day) => ({
     ...day,

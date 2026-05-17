@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useFamily } from "@/lib/family-context";
+import { createClient } from "@/lib/supabase/client";
 import type { ShoppingItem } from "@/types/database";
 
 export function useShoppingList() {
@@ -22,6 +23,20 @@ export function useShoppingList() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  // Realtime subscription
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`shopping-${family.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shopping_items", filter: `family_id=eq.${family.id}` },
+        () => { fetchItems(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function addItem(name: string) {
     const res = await fetch("/api/shopping", {

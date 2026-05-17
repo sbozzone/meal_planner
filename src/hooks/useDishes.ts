@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useFamily } from "@/lib/family-context";
-import type { Dish, DishTag, Ingredient } from "@/types/database";
+import { createClient } from "@/lib/supabase/client";
+import type { Dish, Ingredient } from "@/types/database";
 
 export function useDishes() {
   const { family } = useFamily();
@@ -23,7 +24,21 @@ export function useDishes() {
     fetchDishes();
   }, [fetchDishes]);
 
-  async function addDish(name: string, tags: DishTag[] = [], ingredients: Ingredient[] = []) {
+  // Realtime subscription
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`dishes-${family.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "dishes", filter: `family_id=eq.${family.id}` },
+        () => { fetchDishes(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function addDish(name: string, tags: string[] = [], ingredients: Ingredient[] = []) {
     const res = await fetch("/api/dishes", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },

@@ -79,7 +79,7 @@ export interface Dish {
   id: string;
   family_id: string;
   name: string;
-  tags: DishTag[];
+  tags: string[];
   source_url: string | null;
   ingredients: Ingredient[];
   instructions: string | null;

@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { DishForm } from "@/components/dishes/DishForm";
 import { useDishes } from "@/hooks/useDishes";
 import { useFamily } from "@/lib/family-context";
-import { DISH_TAGS, type Dish, type DishTag } from "@/types/database";
+import { DISH_TAGS, type Dish } from "@/types/database";
 import { Plus, Search, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,18 +15,19 @@ export default function DishesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [search, setSearch] = useState("");
-  const [filterTag, setFilterTag] = useState<DishTag | null>(null);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = dishes.filter((d) => {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTag = !filterTag || d.tags.includes(filterTag);
+    const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
     return matchesSearch && matchesTag;
   });
 
-  const usedTags = DISH_TAGS.filter((t) =>
-    dishes.some((d) => d.tags.includes(t.value))
-  );
+  // Collect all tags across dishes — predefined first (with color), then custom
+  const allUsedTagValues = [...new Set(dishes.flatMap((d) => d.tags))];
+  const predefinedUsed = DISH_TAGS.filter((t) => allUsedTagValues.includes(t.value));
+  const customUsed = allUsedTagValues.filter((t) => !DISH_TAGS.find((dt) => dt.value === t));
 
   function handleEdit(dish: Dish) {
     setEditingDish(dish);
@@ -59,7 +60,7 @@ export default function DishesPage() {
           />
         </div>
 
-        {usedTags.length > 0 && (
+        {allUsedTagValues.length > 0 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             <button
               onClick={() => setFilterTag(null)}
@@ -72,22 +73,33 @@ export default function DishesPage() {
             >
               All
             </button>
-            {usedTags.map((tag) => (
+            {predefinedUsed.map((tag) => (
               <button
                 key={tag.value}
-                onClick={() =>
-                  setFilterTag((prev) =>
-                    prev === tag.value ? null : tag.value
-                  )
-                }
+                onClick={() => setFilterTag((prev) => prev === tag.value ? null : tag.value)}
                 className={cn(
                   "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-colors min-h-[36px]",
                   filterTag === tag.value
+                    ? "text-white border-transparent"
+                    : "border-border text-text-secondary bg-card"
+                )}
+                style={filterTag === tag.value ? { backgroundColor: tag.color } : undefined}
+              >
+                {tag.label}
+              </button>
+            ))}
+            {customUsed.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setFilterTag((prev) => prev === tag ? null : tag)}
+                className={cn(
+                  "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-colors min-h-[36px]",
+                  filterTag === tag
                     ? "border-accent bg-accent text-white"
                     : "border-border text-text-secondary bg-card"
                 )}
               >
-                {tag.label}
+                {tag}
               </button>
             ))}
           </div>
@@ -133,19 +145,15 @@ export default function DishesPage() {
                     {dish.name}
                   </h3>
                   {dish.tags.length > 0 && (
-                    <div className="flex gap-1 mt-1">
-                      {dish.tags.slice(0, 3).map((tag) => {
-                        const tagDef = DISH_TAGS.find(
-                          (t) => t.value === tag
-                        );
+                    <div className="flex gap-1 mt-1 flex-wrap">
+                      {dish.tags.slice(0, 4).map((tag) => {
+                        const tagDef = DISH_TAGS.find((t) => t.value === tag);
                         return (
                           <span
                             key={tag}
                             className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                             style={{
-                              backgroundColor: tagDef
-                                ? `${tagDef.color}18`
-                                : "#DDD8CC",
+                              backgroundColor: tagDef ? `${tagDef.color}18` : "#DDD8CC",
                               color: tagDef?.color || "#7A6F5E",
                             }}
                           >

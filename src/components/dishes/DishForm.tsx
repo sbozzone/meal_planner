@@ -5,7 +5,6 @@ import { BottomSheet } from "@/components/shared/BottomSheet";
 import {
   DISH_TAGS,
   INGREDIENT_CATEGORIES,
-  type DishTag,
   type Ingredient,
   type IngredientCategory,
 } from "@/types/database";
@@ -22,13 +21,14 @@ export function DishForm({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, tags: DishTag[], ingredients: Ingredient[]) => Promise<void>;
+  onSave: (name: string, tags: string[], ingredients: Ingredient[]) => Promise<void>;
   initialName?: string;
-  initialTags?: DishTag[];
+  initialTags?: string[];
   initialIngredients?: Ingredient[];
 }) {
   const [name, setName] = useState(initialName || "");
-  const [tags, setTags] = useState<DishTag[]>(initialTags || []);
+  const [tags, setTags] = useState<string[]>(initialTags || []);
+  const [customTagInput, setCustomTagInput] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialIngredients || []
   );
@@ -37,10 +37,21 @@ export function DishForm({
     (initialIngredients?.length ?? 0) > 0
   );
 
-  function toggleTag(tag: DishTag) {
+  function togglePredefinedTag(value: string) {
     setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
     );
+  }
+
+  function addCustomTag() {
+    const trimmed = customTagInput.trim().toLowerCase().replace(/\s+/g, "-");
+    if (!trimmed || tags.includes(trimmed)) return;
+    setTags((prev) => [...prev, trimmed]);
+    setCustomTagInput("");
+  }
+
+  function removeTag(tag: string) {
+    setTags((prev) => prev.filter((t) => t !== tag));
   }
 
   function addIngredient() {
@@ -67,6 +78,7 @@ export function DishForm({
     await onSave(name.trim(), tags, cleanIngredients);
     setName("");
     setTags([]);
+    setCustomTagInput("");
     setIngredients([]);
     setShowIngredients(false);
     setSaving(false);
@@ -76,10 +88,13 @@ export function DishForm({
   function handleClose() {
     setName(initialName || "");
     setTags(initialTags || []);
+    setCustomTagInput("");
     setIngredients(initialIngredients || []);
     setShowIngredients((initialIngredients?.length ?? 0) > 0);
     onClose();
   }
+
+  const customTags = tags.filter((t) => !DISH_TAGS.find((dt) => dt.value === t));
 
   return (
     <BottomSheet open={open} onClose={handleClose} title={initialName ? "Edit Dish" : "Add New Dish"}>
@@ -103,11 +118,11 @@ export function DishForm({
           <label className="block text-sm font-medium text-text-secondary mb-2">
             Tags
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             {DISH_TAGS.map((tag) => (
               <button
                 key={tag.value}
-                onClick={() => toggleTag(tag.value)}
+                onClick={() => togglePredefinedTag(tag.value)}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                   tags.includes(tag.value)
@@ -124,6 +139,46 @@ export function DishForm({
               </button>
             ))}
           </div>
+
+          {/* Custom tag input */}
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              placeholder="Add custom tag..."
+              value={customTagInput}
+              onChange={(e) => setCustomTagInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
+              className="flex-1 px-3 py-2 bg-bg border border-border rounded-lg text-sm placeholder:text-text-muted"
+              maxLength={30}
+            />
+            <button
+              onClick={addCustomTag}
+              disabled={!customTagInput.trim()}
+              className="px-3 py-2 bg-bg border border-border rounded-lg text-sm text-accent font-medium hover:border-accent/40 disabled:opacity-40 transition-colors"
+            >
+              Add
+            </button>
+          </div>
+
+          {customTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {customTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-bg border border-border text-text-secondary"
+                >
+                  {tag}
+                  <button
+                    onClick={() => removeTag(tag)}
+                    className="text-text-muted hover:text-text transition-colors"
+                    aria-label={`Remove tag ${tag}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

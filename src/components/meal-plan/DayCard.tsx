@@ -13,6 +13,9 @@ export function DayCard({
   onTapToAssign: (date: string) => void;
   onRemoveMeal: (mealId: string) => void;
 }) {
+  const mainMeal = day.meals[0] ?? null;
+  const sideMeals = day.meals.slice(1);
+
   return (
     <div
       className={cn(
@@ -42,22 +45,29 @@ export function DayCard({
       </div>
 
       <div className="p-3 min-h-[60px]">
-        {day.meals.length > 0 && (
-          <div className="space-y-2 mb-2">
-            {day.meals.map((meal) => (
+        {mainMeal && (
+          <MealChip meal={mainMeal} onRemove={onRemoveMeal} isMain />
+        )}
+
+        {sideMeals.length > 0 && (
+          <div className="mt-1.5 pl-2 space-y-1 border-l-2 border-border-light">
+            {sideMeals.map((meal) => (
               <MealChip key={meal.id} meal={meal} onRemove={onRemoveMeal} />
             ))}
           </div>
         )}
+
         <button
           onClick={() => onTapToAssign(day.date)}
           className={cn(
             "w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted hover:border-accent/40 hover:text-accent hover:bg-accent-light/30 transition-colors min-h-touch",
-            day.meals.length > 0 ? "py-1.5" : "py-3"
+            day.meals.length > 0 ? "mt-2 py-1" : "py-3"
           )}
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm">{day.meals.length > 0 ? "Add another" : "Add dinner"}</span>
+          <span className="text-sm">
+            {day.meals.length === 0 ? "Add dinner" : "Add side dish"}
+          </span>
         </button>
       </div>
     </div>
@@ -67,24 +77,38 @@ export function DayCard({
 function MealChip({
   meal,
   onRemove,
+  isMain = false,
 }: {
   meal: MealPlan;
   onRemove: (id: string) => void;
+  isMain?: boolean;
 }) {
   const name = meal.dish?.name || meal.custom_name || "Unknown dish";
 
   return (
-    <div className="flex items-center gap-2 bg-accent-light/70 text-accent-dark rounded-lg px-3 py-2.5">
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-3",
+        isMain
+          ? "bg-accent-light/70 text-accent-dark py-2.5"
+          : "bg-bg text-text-secondary border border-border-light py-2"
+      )}
+    >
+      {!isMain && (
+        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider shrink-0">
+          Side
+        </span>
+      )}
       <span className="flex-1 text-sm font-medium truncate">{name}</span>
       <button
         onClick={(e) => {
           e.stopPropagation();
           onRemove(meal.id);
         }}
-        className="p-1 rounded hover:bg-accent/10 transition-all shrink-0"
+        className="p-1 rounded hover:bg-black/5 transition-all shrink-0"
         aria-label={`Remove ${name}`}
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

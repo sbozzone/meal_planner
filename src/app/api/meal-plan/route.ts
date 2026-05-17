@@ -44,6 +44,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const supabase = createServerClient();
 
+    // Auto-calculate next position for this date
+    const { data: existing } = await supabase
+      .from("meal_plans")
+      .select("position")
+      .eq("family_id", familyId)
+      .eq("meal_date", body.meal_date)
+      .order("position", { ascending: false })
+      .limit(1);
+    const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
+
     const { data, error } = await supabase
       .from("meal_plans")
       .insert({
@@ -51,7 +61,7 @@ export async function POST(request: NextRequest) {
         dish_id: body.dish_id || null,
         meal_date: body.meal_date,
         custom_name: body.custom_name || null,
-        position: body.position || 0,
+        position: nextPosition,
       })
       .select("*, dish:dishes(*)")
       .single();
