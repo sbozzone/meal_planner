@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { DishForm } from "@/components/dishes/DishForm";
+import { ImportUrlSheet } from "@/components/dishes/ImportUrlSheet";
 import { useDishes } from "@/hooks/useDishes";
 import { useFamily } from "@/lib/family-context";
 import { DISH_TAGS, type Dish } from "@/types/database";
-import { Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Link } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DishesPage() {
   const { family } = useFamily();
   const { dishes, loading, addDish, updateDish, deleteDish } = useDishes();
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [search, setSearch] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -105,16 +107,26 @@ export default function DishesPage() {
           </div>
         )}
 
-        <button
-          onClick={() => {
-            setEditingDish(null);
-            setShowForm(true);
-          }}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-accent text-white rounded-card font-semibold hover:bg-accent-hover active:scale-[0.98] transition-all min-h-touch"
-        >
-          <Plus className="w-5 h-5" />
-          Add New Dish
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setEditingDish(null);
+              setShowForm(true);
+            }}
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-accent text-white rounded-card font-semibold hover:bg-accent-hover active:scale-[0.98] transition-all min-h-touch"
+          >
+            <Plus className="w-5 h-5" />
+            Add Dish
+          </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center justify-center gap-2 px-4 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            title="Import from URL"
+          >
+            <Link className="w-4 h-4" />
+            Import URL
+          </button>
+        </div>
 
         {loading ? (
           <div className="space-y-2">
@@ -206,6 +218,14 @@ export default function DishesPage() {
         initialName={editingDish?.name}
         initialTags={editingDish?.tags}
         initialIngredients={editingDish?.ingredients}
+      />
+
+      <ImportUrlSheet
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onSave={async (name, tags, ingredients) => {
+          await addDish(name, tags, ingredients);
+        }}
       />
     </>
   );

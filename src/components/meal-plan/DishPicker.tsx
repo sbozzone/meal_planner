@@ -1,141 +1,305 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Sparkles, Loader2, ChevronLeft } from "lucide-react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
-import { DISH_TAGS, type Dish, type DishTag } from "@/types/database";
+import { DISH_TAGS, type Dish } from "@/types/database";
+import { useFamily } from "@/lib/family-context";
 import { cn } from "@/lib/utils";
+
+interface Suggestion {
+  name: string;
+  fromLibrary: boolean;
+  reason: string;
+}
+
+type View = "list" | "suggest";
 
 export function DishPicker({
   open,
+  date,
   onClose,
   dishes,
   onSelect,
   onAddNew,
+  onAddAndSelect,
 }: {
   open: boolean;
+  date: string | null;
   onClose: () => void;
   dishes: Dish[];
   onSelect: (dish: Dish) => void;
   onAddNew: () => void;
+  onAddAndSelect: (name: string) => Promise<void>;
 }) {
+  const { family } = useFamily();
   const [search, setSearch] = useState("");
-  const [filterTag, setFilterTag] = useState<DishTag | null>(null);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [view, setView] = useState<View>("list");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [addingName, setAddingName] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setSearch("");
       setFilterTag(null);
+      setView("list");
+      setSuggestions([]);
+      setSuggestError(null);
     }
   }, [open]);
 
   const filtered = dishes.filter((d) => {
-    const matchesSearch = d.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesTag = !filterTag || d.tags.includes(filterTag);
+    const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
+    const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
     return matchesSearch && matchesTag;
   });
 
-  const usedTags = DISH_TAGS.filter((t) =>
-    dishes.some((d) => d.tags.includes(t.value))
-  );
+  // Only show tags that are actually used
+  const allUsedTags = [...new Set(dishes.flatMap((d) => d.tags))];
+  const predefinedUsed = DISH_TAGS.filter((t) => allUsedTags.includes(t.value));
+
+  async function handleSuggest() {
+    setView("suggest");
+    if (suggestions.length > 0) return; // already loaded
+    setSuggesting(true);
+    setSuggestError(null);
+    try {
+      const res = await fetch("/api/ai/suggest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-family-id": family.id,
+        },
+        body: JSON.stringify({ date }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSuggestError(data.error || "Failed to get suggestions");
+      } else {
+        setSuggestions(data.suggestions);
+      }
+    } catch {
+      setSuggestError("Network error — please try again");
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  async function handlePickSuggestion(suggestion: Suggestion) {
+    if (suggestion.fromLibrary) {
+      const match = dishes.find(
+        (d) => d.name.toLowerCase() === suggestion.name.toLowerCase()
+      );
+      if (match) {
+        onSelect(match);
+        onClose();
+        return;
+      }
+    }
+    // New dish — add to library then assign
+    setAddingName(suggestion.name);
+    try {
+      await onAddAndSelect(suggestion.name);
+      onClose();
+    } finally {
+      setAddingName(null);
+    }
+  }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Pick a dish">
-      <div className="px-4 py-3 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search dishes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-lg text-sm placeholder:text-text-muted"
-            autoFocus
-          />
-        </div>
+    <BottomSheet open={open} onClose={onClose} title={view === "suggest" ? "Suggestions" : "Pick a dish"}>
+      {view === "suggest" ? (
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => setView("list")}
+            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors mb-4"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to dish list
+          </button>
 
-        {usedTags.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            {usedTags.map((tag) => (
+          {suggesting && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="w-6 h-6 text-accent animate-spin" />
+              <p className="text-sm text-text-muted">Thinking of ideas…</p>
+            </div>
+          )}
+
+          {suggestError && (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-red-500">{suggestError}</p>
               <button
-                key={tag.value}
-                onClick={() =>
-                  setFilterTag((prev) =>
-                    prev === tag.value ? null : tag.value
-                  )
-                }
-                className={cn(
-                  "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-colors min-h-[36px]",
-                  filterTag === tag.value
-                    ? "border-accent bg-accent text-white"
-                    : "border-border text-text-secondary bg-card hover:border-accent/40"
-                )}
+                onClick={() => { setSuggestions([]); handleSuggest(); }}
+                className="text-sm text-accent font-medium"
               >
-                {tag.label}
+                Try again
               </button>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
 
-      <div className="px-4 pb-4">
-        <button
-          onClick={() => {
-            onClose();
-            onAddNew();
-          }}
-          className="w-full flex items-center gap-3 px-4 py-3 mb-2 border-2 border-dashed border-accent/30 rounded-lg text-accent hover:bg-accent-light/30 transition-colors min-h-touch"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="font-medium text-sm">Add new dish</span>
-        </button>
-
-        {filtered.length === 0 ? (
-          <p className="text-center text-text-muted py-8 text-sm">
-            {search ? "No dishes match your search" : "No dishes yet"}
-          </p>
-        ) : (
-          <div className="space-y-1">
-            {filtered.map((dish) => (
-              <button
-                key={dish.id}
-                onClick={() => {
-                  onSelect(dish);
-                  onClose();
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-card-header active:bg-border-light transition-colors text-left min-h-touch"
-              >
-                <span className="flex-1 font-medium text-sm text-text">
-                  {dish.name}
-                </span>
-                {dish.tags.length > 0 && (
-                  <div className="flex gap-1">
-                    {dish.tags.slice(0, 2).map((tag) => {
-                      const tagDef = DISH_TAGS.find((t) => t.value === tag);
-                      return (
-                        <span
-                          key={tag}
-                          className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                          style={{
-                            backgroundColor: tagDef
-                              ? `${tagDef.color}18`
-                              : "#DDD8CC",
-                            color: tagDef?.color || "#7A6F5E",
-                          }}
-                        >
-                          {tagDef?.label || tag}
+          {!suggesting && !suggestError && suggestions.length > 0 && (
+            <div className="space-y-3">
+              {suggestions.map((s, i) => {
+                const inLibrary = dishes.some(
+                  (d) => d.name.toLowerCase() === s.name.toLowerCase()
+                );
+                const isAdding = addingName === s.name;
+                return (
+                  <div
+                    key={i}
+                    className="rounded-card border border-border-light bg-card p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-text">{s.name}</p>
+                        <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                          {s.reason}
+                        </p>
+                      </div>
+                      {inLibrary && (
+                        <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-accent-light/60 text-accent font-medium">
+                          In library
                         </span>
-                      );
-                    })}
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handlePickSuggestion(s)}
+                      disabled={isAdding}
+                      className="mt-3 w-full py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover active:scale-[0.98] transition-all disabled:opacity-50"
+                    >
+                      {isAdding
+                        ? "Adding…"
+                        : inLibrary
+                        ? "Use this dish"
+                        : "Add to library & use"}
+                    </button>
                   </div>
-                )}
+                );
+              })}
+
+              <button
+                onClick={() => { setSuggestions([]); handleSuggest(); }}
+                className="w-full py-2.5 border border-border rounded-lg text-sm text-text-secondary hover:bg-card transition-colors"
+              >
+                Get new suggestions
               </button>
-            ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="px-4 py-3 space-y-3">
+            {/* Suggest button */}
+            <button
+              onClick={handleSuggest}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-accent/30 bg-accent-light/20 text-accent text-sm font-medium hover:bg-accent-light/40 active:scale-[0.98] transition-all min-h-touch"
+            >
+              <Sparkles className="w-4 h-4" />
+              Suggest something for me
+            </button>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+              <input
+                type="text"
+                placeholder="Search dishes..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-bg border border-border rounded-lg text-sm placeholder:text-text-muted"
+                autoFocus
+              />
+            </div>
+
+            {predefinedUsed.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {predefinedUsed.map((tag) => (
+                  <button
+                    key={tag.value}
+                    onClick={() =>
+                      setFilterTag((prev) =>
+                        prev === tag.value ? null : tag.value
+                      )
+                    }
+                    className={cn(
+                      "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-colors min-h-[36px]",
+                      filterTag === tag.value
+                        ? "text-white border-transparent"
+                        : "border-border text-text-secondary bg-card hover:border-accent/40"
+                    )}
+                    style={
+                      filterTag === tag.value
+                        ? { backgroundColor: tag.color }
+                        : undefined
+                    }
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          <div className="px-4 pb-4">
+            <button
+              onClick={() => {
+                onClose();
+                onAddNew();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 mb-2 border-2 border-dashed border-accent/30 rounded-lg text-accent hover:bg-accent-light/30 transition-colors min-h-touch"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium text-sm">Add new dish</span>
+            </button>
+
+            {filtered.length === 0 ? (
+              <p className="text-center text-text-muted py-8 text-sm">
+                {search ? "No dishes match your search" : "No dishes yet"}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {filtered.map((dish) => (
+                  <button
+                    key={dish.id}
+                    onClick={() => {
+                      onSelect(dish);
+                      onClose();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-card-header active:bg-border-light transition-colors text-left min-h-touch"
+                  >
+                    <span className="flex-1 font-medium text-sm text-text">
+                      {dish.name}
+                    </span>
+                    {dish.tags.length > 0 && (
+                      <div className="flex gap-1">
+                        {(dish.tags as string[]).slice(0, 2).map((tag) => {
+                          const tagDef = DISH_TAGS.find((t) => t.value === tag);
+                          return (
+                            <span
+                              key={tag}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                              style={{
+                                backgroundColor: tagDef
+                                  ? `${tagDef.color}18`
+                                  : "#DDD8CC",
+                                color: tagDef?.color || "#7A6F5E",
+                              }}
+                            >
+                              {tagDef?.label || tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </BottomSheet>
   );
 }

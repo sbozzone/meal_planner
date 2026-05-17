@@ -99,6 +99,7 @@ export default function MealPlanPage() {
 
       <DishPicker
         open={pickerDate !== null}
+        date={pickerDate}
         onClose={() => setPickerDate(null)}
         dishes={dishes}
         onSelect={handleSelectDish}
@@ -106,6 +107,12 @@ export default function MealPlanPage() {
           setPendingDate(pickerDate);
           setPickerDate(null);
           setShowAddDish(true);
+        }}
+        onAddAndSelect={async (name) => {
+          const dish = await addDish(name, [], []);
+          if (dish && pickerDate) {
+            await assignDish(pickerDate, dish.id);
+          }
         }}
       />
 
