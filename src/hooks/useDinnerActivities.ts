@@ -63,12 +63,13 @@ export function useDinnerActivities(weekStart: string) {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    if (res.ok) {
-      const activity = await res.json();
-      setActivities((prev) => [...prev, activity]);
-      return activity as DinnerActivity;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to save activity");
     }
-    return null;
+    const activity = await res.json();
+    setActivities((prev) => [...prev, activity]);
+    return activity as DinnerActivity;
   }
 
   async function updateActivity(id: string, input: DinnerActivityInput) {
@@ -77,14 +78,15 @@ export function useDinnerActivities(weekStart: string) {
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    if (res.ok) {
-      const activity = await res.json();
-      setActivities((prev) =>
-        prev.map((entry) => (entry.id === id ? activity : entry))
-      );
-      return activity as DinnerActivity;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to update activity");
     }
-    return null;
+    const activity = await res.json();
+    setActivities((prev) =>
+      prev.map((entry) => (entry.id === id ? activity : entry))
+    );
+    return activity as DinnerActivity;
   }
 
   async function deleteActivity(id: string) {

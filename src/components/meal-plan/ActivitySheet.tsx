@@ -29,9 +29,11 @@ export function ActivitySheet({
 }) {
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setSaveError(null);
     setDraft(
       activity
         ? {
@@ -49,6 +51,7 @@ export function ActivitySheet({
     if (!date || !draft.title.trim() || saving) return;
 
     setSaving(true);
+    setSaveError(null);
     try {
       await onSave({
         activity_date: date,
@@ -58,6 +61,8 @@ export function ActivitySheet({
         notes: draft.notes,
       });
       onClose();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -132,6 +137,12 @@ export function ActivitySheet({
             }
           />
         </label>
+
+        {saveError && (
+          <p className="rounded-lg bg-red/10 px-3 py-2 text-sm text-red">
+            {saveError}
+          </p>
+        )}
 
         <div className="flex gap-3">
           {activity && (

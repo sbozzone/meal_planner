@@ -22,14 +22,14 @@ export function Header({
   return (
     <header className="sticky top-0 z-40 bg-bg/95 backdrop-blur-sm border-b border-border-light pt-safe">
       <div className="flex items-center justify-between px-4 py-3 max-w-3xl mx-auto">
-        <div>
-          <h1 className="font-serif text-xl font-bold text-accent">
+        <Link href="/?splash=1" className="group">
+          <h1 className="font-serif text-xl font-bold text-accent group-active:opacity-70 transition-opacity">
             {title || family.name}
           </h1>
           {subtitle && (
             <p className="text-sm text-text-secondary">{subtitle}</p>
           )}
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           {showPrint && (
             <button
