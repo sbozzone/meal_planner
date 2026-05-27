@@ -35,11 +35,15 @@ export default function LandingPage() {
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [hasFamily, setHasFamily] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("splash")) return;
     const code = localStorage.getItem("familyCode");
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("splash")) {
+      setHasFamily(!!code);
+      return;
+    }
     if (code) router.replace(`/${code}`);
   }, [router]);
 
@@ -106,7 +110,7 @@ export default function LandingPage() {
               }`}
             />
           ))}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/85" />
+          {!hasFamily && <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/85" />}
 
           <div className="relative mt-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-12">
             <div className="mb-4 flex items-center justify-between">
@@ -150,36 +154,38 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <section className="rounded-card border border-white/15 bg-[#fff8ea]/95 p-4 text-text shadow-2xl backdrop-blur">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
-                Family DinnerTime
-              </p>
-              <h1 className="mt-1 font-serif text-3xl font-bold leading-tight">
-                Dinner plans everyone can see.
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">
-                Build a shared weekly dinner plan, keep your family favorites,
-                and track the evenings that need a backup plan.
-              </p>
+            {!hasFamily && (
+              <section className="rounded-card border border-white/15 bg-[#fff8ea]/95 p-4 text-text shadow-2xl backdrop-blur">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                  Family DinnerTime
+                </p>
+                <h1 className="mt-1 font-serif text-3xl font-bold leading-tight">
+                  Dinner plans everyone can see.
+                </h1>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                  Build a shared weekly dinner plan, keep your family favorites,
+                  and track the evenings that need a backup plan.
+                </p>
 
-              <div className="mt-4 space-y-3">
-                <button
-                  onClick={() => setMode("create")}
-                  className="flex min-h-touch w-full items-center justify-between rounded-card bg-accent px-5 py-3 text-base font-semibold text-white transition-all active:scale-[0.98]"
-                >
-                  <span>Create a Family</span>
-                  <ArrowRight className="h-5 w-5" />
-                </button>
+                <div className="mt-4 space-y-3">
+                  <button
+                    onClick={() => setMode("create")}
+                    className="flex min-h-touch w-full items-center justify-between rounded-card bg-accent px-5 py-3 text-base font-semibold text-white transition-all active:scale-[0.98]"
+                  >
+                    <span>Create a Family</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
 
-                <button
-                  onClick={() => setMode("join")}
-                  className="flex min-h-touch w-full items-center justify-between rounded-card border border-border bg-white px-5 py-3 text-base font-semibold text-text transition-all active:scale-[0.98]"
-                >
-                  <span>Join a Family</span>
-                  <Users className="h-5 w-5 text-text-secondary" />
-                </button>
-              </div>
-            </section>
+                  <button
+                    onClick={() => setMode("join")}
+                    className="flex min-h-touch w-full items-center justify-between rounded-card border border-border bg-white px-5 py-3 text-base font-semibold text-text transition-all active:scale-[0.98]"
+                  >
+                    <span>Join a Family</span>
+                    <Users className="h-5 w-5 text-text-secondary" />
+                  </button>
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </main>
