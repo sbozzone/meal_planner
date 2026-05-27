@@ -37,6 +37,8 @@ export default function LandingPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("splash")) return;
     const code = localStorage.getItem("familyCode");
     if (code) router.replace(`/${code}`);
   }, [router]);
