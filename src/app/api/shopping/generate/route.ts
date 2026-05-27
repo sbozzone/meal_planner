@@ -66,6 +66,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: pantryItems } = await supabase
+      .from("pantry_items")
+      .select("id, name, quantity, unit, low_stock_threshold")
+      .eq("family_id", familyId);
+
+    const findPantryMatch = (ingredientName: string) => {
+      const normalized = ingredientName.toLowerCase();
+      return (pantryItems || []).find((item) => {
+        const pantryName = String(item.name).toLowerCase();
+        return pantryName === normalized || pantryName.includes(normalized) || normalized.includes(pantryName);
+      });
+    };
+
     // Remove existing auto-generated items for this family
     await supabase
       .from("shopping_items")
@@ -74,14 +87,31 @@ export async function POST(request: NextRequest) {
       .eq("source", "auto");
 
     // Insert new auto items
-    const items = Array.from(ingredientMap.entries()).map(([name, data]) => ({
-      family_id: familyId,
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      quantity: data.quantity || null,
-      category: data.category,
-      source: "auto",
-      meal_plan_id: data.mealPlanId,
-    }));
+    const items = Array.from(ingredientMap.entries()).map(([name, data]) => {
+      const pantry = findPantryMatch(name);
+      const lowStock =
+        pantry?.low_stock_threshold !== null &&
+        pantry?.low_stock_threshold !== undefined &&
+        Number(pantry.quantity) <= Number(pantry.low_stock_threshold);
+      const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+      const pantryNote = pantry
+        ? lowStock
+          ? `Pantry has ${pantry.quantity} ${pantry.unit || ""}, but it is low stock`
+          : `Already have ${pantry.quantity} ${pantry.unit || ""} in pantry`
+        : null;
+
+      return {
+        family_id: familyId,
+        name: displayName,
+        quantity: data.quantity || null,
+        category: data.category,
+        source: "auto",
+        meal_plan_id: data.mealPlanId,
+        pantry_item_id: pantry?.id || null,
+        pantry_note: pantryNote,
+        is_checked: Boolean(pantry && !lowStock),
+      };
+    });
 
     const { data, error } = await supabase
       .from("shopping_items")

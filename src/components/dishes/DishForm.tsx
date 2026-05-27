@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
 import {
+  APPLIANCES,
   DISH_TAGS,
   INGREDIENT_CATEGORIES,
   type Ingredient,
   type IngredientCategory,
 } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { Plus, X } from "lucide-react";
+import { Camera, Plus, Sparkles, X } from "lucide-react";
+
+export type DishFormExtras = {
+  is_memory: boolean;
+  memory_story: string | null;
+  memory_image_url: string | null;
+  appliances: string[];
+  memoryImageFile?: File | null;
+};
 
 export function DishForm({
   open,
@@ -18,13 +27,26 @@ export function DishForm({
   initialName,
   initialTags,
   initialIngredients,
+  initialIsMemory,
+  initialMemoryStory,
+  initialMemoryImageUrl,
+  initialAppliances,
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, tags: string[], ingredients: Ingredient[]) => Promise<void>;
+  onSave: (
+    name: string,
+    tags: string[],
+    ingredients: Ingredient[],
+    extras: DishFormExtras
+  ) => Promise<void>;
   initialName?: string;
   initialTags?: string[];
   initialIngredients?: Ingredient[];
+  initialIsMemory?: boolean;
+  initialMemoryStory?: string | null;
+  initialMemoryImageUrl?: string | null;
+  initialAppliances?: string[];
 }) {
   const [name, setName] = useState(initialName || "");
   const [tags, setTags] = useState<string[]>(initialTags || []);
@@ -36,6 +58,11 @@ export function DishForm({
   const [showIngredients, setShowIngredients] = useState(
     (initialIngredients?.length ?? 0) > 0
   );
+  const [isMemory, setIsMemory] = useState(Boolean(initialIsMemory));
+  const [memoryStory, setMemoryStory] = useState(initialMemoryStory || "");
+  const [memoryImageUrl, setMemoryImageUrl] = useState(initialMemoryImageUrl || "");
+  const [memoryImageFile, setMemoryImageFile] = useState<File | null>(null);
+  const [appliances, setAppliances] = useState<string[]>(initialAppliances || []);
 
   function togglePredefinedTag(value: string) {
     setTags((prev) =>
@@ -71,16 +98,41 @@ export function DishForm({
     setIngredients((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function toggleAppliance(appliance: string) {
+    setAppliances((prev) =>
+      prev.includes(appliance)
+        ? prev.filter((item) => item !== appliance)
+        : [...prev, appliance]
+    );
+  }
+
+  function handleImageChange(file: File | undefined) {
+    if (!file) return;
+    setMemoryImageFile(file);
+    setMemoryImageUrl(URL.createObjectURL(file));
+  }
+
   async function handleSubmit() {
     if (!name.trim()) return;
     setSaving(true);
     const cleanIngredients = ingredients.filter((ing) => ing.name.trim());
-    await onSave(name.trim(), tags, cleanIngredients);
+    await onSave(name.trim(), tags, cleanIngredients, {
+      is_memory: isMemory,
+      memory_story: isMemory ? memoryStory.trim() || null : null,
+      memory_image_url: isMemory ? memoryImageUrl || null : null,
+      appliances,
+      memoryImageFile,
+    });
     setName("");
     setTags([]);
     setCustomTagInput("");
     setIngredients([]);
     setShowIngredients(false);
+    setIsMemory(false);
+    setMemoryStory("");
+    setMemoryImageUrl("");
+    setMemoryImageFile(null);
+    setAppliances([]);
     setSaving(false);
     onClose();
   }
@@ -91,6 +143,11 @@ export function DishForm({
     setCustomTagInput("");
     setIngredients(initialIngredients || []);
     setShowIngredients((initialIngredients?.length ?? 0) > 0);
+    setIsMemory(Boolean(initialIsMemory));
+    setMemoryStory(initialMemoryStory || "");
+    setMemoryImageUrl(initialMemoryImageUrl || "");
+    setMemoryImageFile(null);
+    setAppliances(initialAppliances || []);
     onClose();
   }
 
@@ -258,6 +315,74 @@ export function DishForm({
               </button>
             </div>
           )}
+        </div>
+
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 rounded-card border border-border-light bg-bg px-4 py-3">
+            <input
+              type="checkbox"
+              checked={isMemory}
+              onChange={(e) => setIsMemory(e.target.checked)}
+              className="h-4 w-4 accent-accent"
+            />
+            <span className="flex items-center gap-2 text-sm font-medium text-text">
+              <Sparkles className="w-4 h-4 text-gold" />
+              This is a memory meal
+            </span>
+          </label>
+
+          {isMemory && (
+            <div className="space-y-3 rounded-card border border-accent/20 bg-accent-light/30 p-3">
+              {memoryImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={memoryImageUrl}
+                  alt="Memory preview"
+                  className="h-36 w-full rounded-lg object-cover border border-border-light"
+                />
+              )}
+              <label className="flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-lg border border-accent/30 bg-card px-3 py-2 text-sm font-medium text-accent">
+                <Camera className="w-4 h-4" />
+                Add photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageChange(e.target.files?.[0])}
+                />
+              </label>
+              <textarea
+                placeholder="Tell the story of this meal..."
+                value={memoryStory}
+                onChange={(e) => setMemoryStory(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 font-serif text-base leading-relaxed placeholder:text-text-muted"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            Appliances needed
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {APPLIANCES.map((appliance) => (
+              <button
+                key={appliance}
+                type="button"
+                onClick={() => toggleAppliance(appliance)}
+                className={cn(
+                  "min-h-[36px] rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  appliances.includes(appliance)
+                    ? "border-accent bg-accent text-white"
+                    : "border-border bg-bg text-text-secondary hover:border-accent/40"
+                )}
+              >
+                {appliance}
+              </button>
+            ))}
+          </div>
         </div>
 
         <button

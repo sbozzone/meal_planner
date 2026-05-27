@@ -218,7 +218,13 @@ function ShoppingRow({
   onToggle,
   onDelete,
 }: {
-  item: { id: string; name: string; quantity: string | null; source: string };
+  item: {
+    id: string;
+    name: string;
+    quantity: string | null;
+    source: string;
+    pantry_note?: string | null;
+  };
   onToggle: (id: string, checked: boolean) => void;
   onDelete: (id: string) => void;
 }) {
@@ -229,7 +235,12 @@ function ShoppingRow({
         className="w-6 h-6 rounded-full border-2 border-border hover:border-accent transition-colors shrink-0"
         aria-label={`Check off ${item.name}`}
       />
-      <span className="flex-1 text-sm text-text">{item.name}</span>
+      <div className="min-w-0 flex-1">
+        <span className="text-sm text-text">{item.name}</span>
+        {item.pantry_note && (
+          <p className="mt-0.5 text-xs text-green">{item.pantry_note}</p>
+        )}
+      </div>
       {item.quantity && (
         <span className="text-xs text-text-muted font-mono">{item.quantity}</span>
       )}

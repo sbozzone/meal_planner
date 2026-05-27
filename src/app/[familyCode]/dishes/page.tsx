@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { DishForm } from "@/components/dishes/DishForm";
+import type { DishFormExtras } from "@/components/dishes/DishForm";
 import { ImportUrlSheet } from "@/components/dishes/ImportUrlSheet";
+import { MemoryModal } from "@/components/dishes/MemoryModal";
 import { useDishes } from "@/hooks/useDishes";
 import { useFamily } from "@/lib/family-context";
-import { DISH_TAGS, type Dish } from "@/types/database";
-import { Plus, Search, Trash2, Pencil, Link } from "lucide-react";
+import { APPLIANCES, DISH_TAGS, type Dish } from "@/types/database";
+import { Plus, Search, Trash2, Pencil, Link, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DishesPage() {
@@ -18,12 +20,17 @@ export default function DishesPage() {
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [search, setSearch] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [filterAppliance, setFilterAppliance] = useState("");
+  const [memoriesOnly, setMemoriesOnly] = useState(false);
+  const [memoryDish, setMemoryDish] = useState<Dish | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = dishes.filter((d) => {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
     const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
-    return matchesSearch && matchesTag;
+    const matchesAppliance = !filterAppliance || d.appliances?.includes(filterAppliance);
+    const matchesMemory = !memoriesOnly || d.is_memory;
+    return matchesSearch && matchesTag && matchesAppliance && matchesMemory;
   });
 
   // Collect all tags across dishes — predefined first (with color), then custom
@@ -43,6 +50,53 @@ export default function DishesPage() {
     } else {
       setConfirmDeleteId(id);
       setTimeout(() => setConfirmDeleteId(null), 3000);
+    }
+  }
+
+  async function uploadMemoryPhoto(dishId: string, file: File) {
+    const form = new FormData();
+    form.append("image", file);
+    const res = await fetch(`/api/dishes/${dishId}/memory/upload`, {
+      method: "POST",
+      headers: { "x-family-id": family.id },
+      body: form,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.memoryImageUrl as string;
+  }
+
+  async function saveDish(
+    name: string,
+    tags: string[],
+    ingredients: Dish["ingredients"],
+    extras: DishFormExtras,
+    dish?: Dish | null
+  ) {
+    const imageUrl = extras.memoryImageFile && dish
+      ? await uploadMemoryPhoto(dish.id, extras.memoryImageFile)
+      : extras.memory_image_url;
+    const payload = {
+      name,
+      tags,
+      ingredients,
+      is_memory: extras.is_memory,
+      memory_story: extras.memory_story,
+      memory_image_url: imageUrl,
+      appliances: extras.appliances,
+    };
+
+    if (dish) {
+      await updateDish(dish.id, payload);
+      return;
+    }
+
+    const created = await addDish(name, tags, ingredients, payload);
+    if (created && extras.memoryImageFile) {
+      const uploadedUrl = await uploadMemoryPhoto(created.id, extras.memoryImageFile);
+      if (uploadedUrl) {
+        await updateDish(created.id, { memory_image_url: uploadedUrl });
+      }
     }
   }
 
@@ -106,6 +160,33 @@ export default function DishesPage() {
             ))}
           </div>
         )}
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
+          <select
+            value={filterAppliance}
+            onChange={(e) => setFilterAppliance(e.target.value)}
+            className="min-h-touch rounded-lg border border-border bg-card px-3 py-2 text-sm text-text-secondary"
+          >
+            <option value="">All appliances</option>
+            {APPLIANCES.map((appliance) => (
+              <option key={appliance} value={appliance}>
+                {appliance}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => setMemoriesOnly((prev) => !prev)}
+            className={cn(
+              "flex min-h-touch items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium",
+              memoriesOnly
+                ? "border-accent bg-accent text-white"
+                : "border-border bg-card text-text-secondary"
+            )}
+          >
+            <Sparkles className="w-4 h-4" />
+            Memories only
+          </button>
+        </div>
 
         <div className="flex gap-2">
           <button
@@ -175,6 +256,30 @@ export default function DishesPage() {
                       })}
                     </div>
                   )}
+                  {dish.is_memory && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMemoryDish(dish);
+                      }}
+                      className="mt-2 inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-1 text-[10px] font-semibold text-gold"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Memory
+                    </button>
+                  )}
+                  {dish.appliances?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {dish.appliances.slice(0, 3).map((appliance) => (
+                        <span
+                          key={appliance}
+                          className="rounded-full bg-card-header px-1.5 py-0.5 text-[10px] text-text-secondary"
+                        >
+                          {appliance}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </button>
                 <button
                   onClick={() => handleEdit(dish)}
@@ -208,16 +313,16 @@ export default function DishesPage() {
           setShowForm(false);
           setEditingDish(null);
         }}
-        onSave={async (name, tags, ingredients) => {
-          if (editingDish) {
-            await updateDish(editingDish.id, { name, tags, ingredients });
-          } else {
-            await addDish(name, tags, ingredients);
-          }
+        onSave={async (name, tags, ingredients, extras) => {
+          await saveDish(name, tags, ingredients, extras, editingDish);
         }}
         initialName={editingDish?.name}
         initialTags={editingDish?.tags}
         initialIngredients={editingDish?.ingredients}
+        initialIsMemory={editingDish?.is_memory}
+        initialMemoryStory={editingDish?.memory_story}
+        initialMemoryImageUrl={editingDish?.memory_image_url}
+        initialAppliances={editingDish?.appliances}
       />
 
       <ImportUrlSheet
@@ -225,6 +330,16 @@ export default function DishesPage() {
         onClose={() => setShowImport(false)}
         onSave={async (name, tags, ingredients) => {
           await addDish(name, tags, ingredients);
+        }}
+      />
+
+      <MemoryModal
+        dish={memoryDish}
+        open={memoryDish !== null}
+        onClose={() => setMemoryDish(null)}
+        onEdit={(dish) => {
+          setMemoryDish(null);
+          handleEdit(dish);
         }}
       />
     </>

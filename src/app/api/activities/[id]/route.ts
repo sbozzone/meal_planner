@@ -13,31 +13,25 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const supabase = createServerClient();
-    const allowed = [
-      "name",
-      "tags",
-      "ingredients",
-      "notes",
-      "source_url",
-      "instructions",
-      "prep_time",
-      "cook_time",
-      "servings",
-      "image_url",
-      "is_favorite",
-      "is_memory",
-      "memory_story",
-      "memory_image_url",
-      "appliances",
-    ];
-    const patch = Object.fromEntries(
-      Object.entries(body).filter(([key]) => allowed.includes(key))
-    );
+    const title = typeof body.title === "string" ? body.title.trim() : "";
 
+    if (!title || !body.activity_date) {
+      return NextResponse.json(
+        { error: "Activity date and title are required" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createServerClient();
     const { data, error } = await supabase
-      .from("dishes")
-      .update(patch)
+      .from("dinner_activities")
+      .update({
+        activity_date: body.activity_date,
+        title,
+        start_time: body.start_time || null,
+        end_time: body.end_time || null,
+        notes: body.notes?.trim() || null,
+      })
       .eq("id", id)
       .eq("family_id", familyId)
       .select()
@@ -65,7 +59,7 @@ export async function DELETE(
 
   const supabase = createServerClient();
   const { error } = await supabase
-    .from("dishes")
+    .from("dinner_activities")
     .delete()
     .eq("id", id)
     .eq("family_id", familyId);

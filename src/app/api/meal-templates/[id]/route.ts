@@ -13,30 +13,13 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const supabase = createServerClient();
-    const allowed = [
-      "name",
-      "tags",
-      "ingredients",
-      "notes",
-      "source_url",
-      "instructions",
-      "prep_time",
-      "cook_time",
-      "servings",
-      "image_url",
-      "is_favorite",
-      "is_memory",
-      "memory_story",
-      "memory_image_url",
-      "appliances",
-    ];
-    const patch = Object.fromEntries(
-      Object.entries(body).filter(([key]) => allowed.includes(key))
-    );
+    const patch: Record<string, string | null> = {};
+    if (body.name !== undefined) patch.name = String(body.name).trim();
+    if (body.description !== undefined) patch.description = body.description || null;
 
+    const supabase = createServerClient();
     const { data, error } = await supabase
-      .from("dishes")
+      .from("meal_templates")
       .update(patch)
       .eq("id", id)
       .eq("family_id", familyId)
@@ -65,7 +48,7 @@ export async function DELETE(
 
   const supabase = createServerClient();
   const { error } = await supabase
-    .from("dishes")
+    .from("meal_templates")
     .delete()
     .eq("id", id)
     .eq("family_id", familyId);

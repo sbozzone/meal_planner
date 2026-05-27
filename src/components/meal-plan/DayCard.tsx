@@ -1,20 +1,28 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { CalendarClock, Plus, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import type { DayPlan, MealPlan } from "@/types/database";
+import type { DayPlan, DinnerActivity, MealPlan } from "@/types/database";
 
 export function DayCard({
   day,
   onTapToAssign,
+  onAddActivity,
+  onEditActivity,
   onRemoveMeal,
+  familyId,
 }: {
   day: DayPlan;
   onTapToAssign: (date: string) => void;
+  onAddActivity: (date: string) => void;
+  onEditActivity: (activity: DinnerActivity) => void;
   onRemoveMeal: (mealId: string) => void;
+  familyId: string;
 }) {
   const mainMeal = day.meals[0] ?? null;
   const sideMeals = day.meals.slice(1);
+  const activities = day.activities ?? [];
 
   return (
     <div
@@ -46,22 +54,47 @@ export function DayCard({
 
       <div className="p-3 min-h-[60px]">
         {mainMeal && (
-          <MealChip meal={mainMeal} onRemove={onRemoveMeal} isMain />
+          <MealChip meal={mainMeal} onRemove={onRemoveMeal} familyId={familyId} isMain />
         )}
 
         {sideMeals.length > 0 && (
           <div className="mt-1.5 pl-2 space-y-1 border-l-2 border-border-light">
             {sideMeals.map((meal) => (
-              <MealChip key={meal.id} meal={meal} onRemove={onRemoveMeal} />
+              <MealChip key={meal.id} meal={meal} onRemove={onRemoveMeal} familyId={familyId} />
             ))}
           </div>
         )}
 
+        {activities.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {activities.map((activity) => (
+              <button
+                key={activity.id}
+                className="flex w-full items-start gap-2 rounded-lg border border-gold/25 bg-gold/10 px-3 py-2 text-left text-sm text-text-secondary"
+                type="button"
+                onClick={() => onEditActivity(activity)}
+              >
+                <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold text-text">
+                    {activity.title}
+                  </span>
+                  <span className="block text-xs">
+                    {formatActivityTime(activity)}
+                    {activity.notes ? ` - ${activity.notes}` : ""}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
         <button
           onClick={() => onTapToAssign(day.date)}
           className={cn(
-            "w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted hover:border-accent/40 hover:text-accent hover:bg-accent-light/30 transition-colors min-h-touch",
-            day.meals.length > 0 ? "mt-2 py-1" : "py-3"
+            "flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted hover:border-accent/40 hover:text-accent hover:bg-accent-light/30 transition-colors min-h-touch",
+            day.meals.length > 0 ? "py-1" : "py-3"
           )}
         >
           <Plus className="w-4 h-4" />
@@ -69,6 +102,14 @@ export function DayCard({
             {day.meals.length === 0 ? "Add dinner" : "Add side dish"}
           </span>
         </button>
+        <button
+          onClick={() => onAddActivity(day.date)}
+          className="flex min-h-touch items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted transition-colors hover:border-gold/50 hover:bg-gold/10 hover:text-text"
+        >
+          <CalendarClock className="h-4 w-4" />
+          <span className="text-sm">Add activity</span>
+        </button>
+        </div>
       </div>
     </div>
   );
@@ -77,13 +118,59 @@ export function DayCard({
 function MealChip({
   meal,
   onRemove,
+  familyId,
   isMain = false,
 }: {
   meal: MealPlan;
   onRemove: (id: string) => void;
+  familyId: string;
   isMain?: boolean;
 }) {
   const name = meal.dish?.name || meal.custom_name || "Unknown dish";
+  const [deviceId, setDeviceId] = useState("");
+  const [voteCount, setVoteCount] = useState(meal.vote_count || 0);
+  const [userVote, setUserVote] = useState<1 | -1 | null>(null);
+
+  useEffect(() => {
+    setDeviceId(getDeviceId());
+  }, []);
+
+  useEffect(() => {
+    setVoteCount(meal.vote_count || 0);
+    if (deviceId) {
+      setUserVote((meal.votes || {})[deviceId] || null);
+    }
+  }, [deviceId, meal.vote_count, meal.votes]);
+
+  async function handleVote(value: 1 | -1) {
+    if (!deviceId) return;
+    const removing = userVote === value;
+    const optimisticVote = removing ? null : value;
+    const optimisticCount =
+      voteCount - (userVote || 0) + (optimisticVote || 0);
+
+    setUserVote(optimisticVote);
+    setVoteCount(optimisticCount);
+
+    const res = await fetch(
+      removing
+        ? `/api/meal-plan/${meal.id}/vote?deviceId=${encodeURIComponent(deviceId)}`
+        : `/api/meal-plan/${meal.id}/vote`,
+      {
+        method: removing ? "DELETE" : "POST",
+        headers: removing
+          ? { "x-family-id": familyId }
+          : { "x-family-id": familyId, "Content-Type": "application/json" },
+        body: removing ? undefined : JSON.stringify({ voteValue: value, deviceId }),
+      }
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      setVoteCount(data.voteCount);
+      setUserVote(data.userVote);
+    }
+  }
 
   return (
     <div
@@ -100,6 +187,39 @@ function MealChip({
         </span>
       )}
       <span className="flex-1 text-sm font-medium truncate">{name}</span>
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleVote(1);
+          }}
+          className={cn(
+            "min-h-touch min-w-[44px] rounded-lg px-2 flex items-center justify-center gap-1 text-xs font-semibold transition-colors",
+            userVote === 1
+              ? "bg-accent text-white"
+              : "bg-white/60 text-accent-dark hover:bg-accent-light"
+          )}
+          aria-label={`Upvote ${name}`}
+        >
+          <ThumbsUp className="w-3.5 h-3.5" />
+          {voteCount !== 0 && <span>{voteCount}</span>}
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleVote(-1);
+          }}
+          className={cn(
+            "min-h-touch min-w-[44px] rounded-lg px-2 flex items-center justify-center transition-colors",
+            userVote === -1
+              ? "bg-red text-white"
+              : "bg-white/60 text-text-secondary hover:bg-card-header"
+          )}
+          aria-label={`Downvote ${name}`}
+        >
+          <ThumbsDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -112,4 +232,37 @@ function MealChip({
       </button>
     </div>
   );
+}
+
+function getDeviceId() {
+  if (typeof window === "undefined") return "server";
+  const key = "family-dinnertime-device-id";
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const next =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  window.localStorage.setItem(key, next);
+  return next;
+}
+
+function formatActivityTime(activity: DinnerActivity) {
+  const start = formatTime(activity.start_time);
+  const end = formatTime(activity.end_time);
+
+  if (start && end) return `${start}-${end}`;
+  if (start) return start;
+  if (end) return `until ${end}`;
+  return "Dinner impact";
+}
+
+function formatTime(value: string | null) {
+  if (!value) return "";
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  if (!Number.isFinite(hour)) return value;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minuteText ?? "00"} ${suffix}`;
 }

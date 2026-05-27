@@ -38,11 +38,16 @@ export function useDishes() {
     return () => { supabase.removeChannel(channel); };
   }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function addDish(name: string, tags: string[] = [], ingredients: Ingredient[] = []) {
+  async function addDish(
+    name: string,
+    tags: string[] = [],
+    ingredients: Ingredient[] = [],
+    extras: Partial<Dish> = {}
+  ) {
     const res = await fetch("/api/dishes", {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ name, tags, ingredients }),
+      body: JSON.stringify({ name, tags, ingredients, ...extras }),
     });
     if (res.ok) {
       const dish = await res.json();

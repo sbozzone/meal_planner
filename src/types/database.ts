@@ -60,6 +60,21 @@ export const INGREDIENT_CATEGORIES: IngredientCategory[] = [
   "Other",
 ];
 
+export const APPLIANCES = [
+  "Air Fryer",
+  "Crockpot",
+  "Instant Pot",
+  "Grill",
+  "Smoker",
+  "Oven",
+  "Stovetop",
+  "Microwave",
+  "Blender",
+  "Food Processor",
+] as const;
+
+export type Appliance = (typeof APPLIANCES)[number];
+
 export interface Ingredient {
   name: string;
   quantity: string;
@@ -89,6 +104,10 @@ export interface Dish {
   image_url: string | null;
   notes: string | null;
   is_favorite: boolean;
+  is_memory: boolean;
+  memory_story: string | null;
+  memory_image_url: string | null;
+  appliances: string[];
   created_at: string;
   updated_at: string;
 }
@@ -100,8 +119,22 @@ export interface MealPlan {
   meal_date: string;
   custom_name: string | null;
   position: number;
+  votes: Record<string, 1 | -1>;
+  vote_count: number;
   created_at: string;
   dish?: Dish;
+}
+
+export interface DinnerActivity {
+  id: string;
+  family_id: string;
+  activity_date: string;
+  title: string;
+  start_time: string | null;
+  end_time: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ShoppingItem {
@@ -113,6 +146,8 @@ export interface ShoppingItem {
   is_checked: boolean;
   source: "manual" | "auto";
   meal_plan_id: string | null;
+  pantry_item_id: string | null;
+  pantry_note: string | null;
   created_at: string;
 }
 
@@ -123,4 +158,38 @@ export interface DayPlan {
   dayNumber: string;
   isToday: boolean;
   meals: MealPlan[];
+  activities?: DinnerActivity[];
+}
+
+export interface PantryItem {
+  id: string;
+  family_id: string;
+  name: string;
+  quantity: number;
+  unit: string | null;
+  category: string | null;
+  expiry_date: string | null;
+  low_stock_threshold: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  daysUntilExpiry?: number | null;
+  lowStock?: boolean;
+}
+
+export interface MealTemplateMeal {
+  dayOfWeek: number;
+  dishId?: string | null;
+  dishName?: string | null;
+  customName?: string | null;
+}
+
+export interface MealTemplate {
+  id: string;
+  family_id: string;
+  name: string;
+  description: string | null;
+  meals: MealTemplateMeal[];
+  created_at: string;
+  updated_at: string;
 }

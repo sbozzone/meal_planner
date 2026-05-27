@@ -1,7 +1,7 @@
 "use client";
 
 import { useFamily } from "@/lib/family-context";
-import { Printer, Settings } from "lucide-react";
+import { LayoutList, Printer, Settings } from "lucide-react";
 import Link from "next/link";
 
 export function Header({
@@ -9,11 +9,13 @@ export function Header({
   subtitle,
   showPrint,
   familyCode,
+  onTemplatesClick,
 }: {
   title?: string;
   subtitle?: string;
   showPrint?: boolean;
   familyCode: string;
+  onTemplatesClick?: () => void;
 }) {
   const { family } = useFamily();
 
@@ -36,6 +38,15 @@ export function Header({
               aria-label="Print"
             >
               <Printer className="w-5 h-5" />
+            </button>
+          )}
+          {onTemplatesClick && (
+            <button
+              onClick={onTemplatesClick}
+              className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
+              aria-label="Meal templates"
+            >
+              <LayoutList className="w-5 h-5" />
             </button>
           )}
           <Link

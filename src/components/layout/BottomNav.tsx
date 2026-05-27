@@ -2,13 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, UtensilsCrossed, ShoppingCart } from "lucide-react";
+import { CalendarDays, Package, ShoppingCart, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "", label: "Plan", icon: CalendarDays },
   { href: "/dishes", label: "Dishes", icon: UtensilsCrossed },
   { href: "/shopping", label: "Shop", icon: ShoppingCart },
+  { href: "/pantry", label: "Pantry", icon: Package },
 ];
 
 export function BottomNav({ familyCode }: { familyCode: string }) {

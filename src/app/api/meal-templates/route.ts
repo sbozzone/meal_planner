@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServerClient();
   const { data, error } = await supabase
-    .from("dishes")
+    .from("meal_templates")
     .select("*")
     .eq("family_id", familyId)
-    .order("name");
+    .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -29,20 +29,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const supabase = createServerClient();
+    const name = String(body.name || "").trim();
+    if (!name || !Array.isArray(body.meals)) {
+      return NextResponse.json({ error: "Name and meals are required" }, { status: 400 });
+    }
 
+    const supabase = createServerClient();
     const { data, error } = await supabase
-      .from("dishes")
+      .from("meal_templates")
       .insert({
         family_id: familyId,
-        name: body.name,
-        tags: body.tags || [],
-        ingredients: body.ingredients || [],
-        notes: body.notes || null,
-        is_memory: Boolean(body.is_memory),
-        memory_story: body.memory_story || null,
-        memory_image_url: body.memory_image_url || null,
-        appliances: Array.isArray(body.appliances) ? body.appliances : [],
+        name,
+        description: body.description || null,
+        meals: body.meals,
       })
       .select()
       .single();

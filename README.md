@@ -53,6 +53,18 @@ Stephen wants a mobile-first PWA for family weekly dinner planning. The app lets
 | created_at | TIMESTAMPTZ | |
 | UNIQUE | | `(family_id, meal_date, position)` |
 
+### dinner_activities
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID PK | |
+| family_id | UUID FK -> families | CASCADE delete |
+| activity_date | DATE NOT NULL | The day affected by the activity |
+| title | TEXT NOT NULL | e.g. "Meeting during dinner" |
+| start_time | TIME | Optional |
+| end_time | TIME | Optional |
+| notes | TEXT | Optional planning context |
+| created_at / updated_at | TIMESTAMPTZ | |
+
 ### shopping_items
 | Column | Type | Notes |
 |--------|------|-------|
@@ -66,7 +78,8 @@ Stephen wants a mobile-first PWA for family weekly dinner planning. The app lets
 | meal_plan_id | UUID FK → meal_plans | SET NULL on delete |
 | created_at | TIMESTAMPTZ | |
 
-**Realtime**: Enable on `meal_plans`, `shopping_items`, `dishes`  
+**Realtime**: Enable on `meal_plans`, `shopping_items`, `dishes`, `dinner_activities`  
+Apply `supabase/migrations/003_dinner_activities.sql` before using the dinner-impact activity UI in production.
 **RLS**: Skip for V1 — API routes validate family_id from cookie against share_code
 
 ---
