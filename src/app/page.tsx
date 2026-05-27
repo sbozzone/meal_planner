@@ -112,6 +112,21 @@ export default function LandingPage() {
           ))}
           {!hasFamily && <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/85" />}
 
+          {hasFamily && (
+            <div className="absolute top-0 left-0 right-0 flex justify-end px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
+              <button
+                onClick={() => {
+                  const code = localStorage.getItem("familyCode");
+                  if (code) router.push(`/${code}`);
+                }}
+                className="flex items-center gap-2 rounded-full bg-black/40 px-4 py-2 text-sm font-semibold text-white backdrop-blur"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Back to app
+              </button>
+            </div>
+          )}
+
           <div className="relative mt-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-12">
             <div className="mb-4 flex items-center justify-between">
               <button
