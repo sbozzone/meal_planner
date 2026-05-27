@@ -37,6 +37,11 @@ export default function LandingPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const code = localStorage.getItem("familyCode");
+    if (code) router.replace(`/${code}`);
+  }, [router]);
+
+  useEffect(() => {
     if (mode !== "home") return;
     const id = window.setInterval(() => {
       setSplashIndex((current) => (current + 1) % splashImages.length);
