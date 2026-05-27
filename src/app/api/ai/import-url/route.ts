@@ -61,44 +61,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
-    // Fetch the page
-    let html: string;
+    // Fetch via Jina Reader which handles bot-protected sites
+    let cleaned: string;
     try {
-      const response = await fetch(parsedUrl.toString(), {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Accept-Encoding": "gzip, deflate, br",
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
+      const response = await fetch(
+        `https://r.jina.ai/${parsedUrl.toString()}`,
+        {
+          headers: {
+            Accept: "text/plain",
+            "X-Return-Format": "text",
+          },
+          signal: AbortSignal.timeout(20000),
+        }
+      );
       if (!response.ok) {
         return NextResponse.json(
           { error: `Could not fetch page (HTTP ${response.status})` },
           { status: 422 }
         );
       }
-      html = await response.text();
+      cleaned = (await response.text()).slice(0, 60_000);
     } catch {
       return NextResponse.json(
-        { error: "Could not fetch that URL — the site may block automated requests" },
+        { error: "Could not fetch that URL — check the address and try again" },
         { status: 422 }
       );
     }
-
-    // Strip script/style tags and trim to 60KB to stay within token limits
-    const cleaned = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<!--[\s\S]*?-->/g, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s{2,}/g, " ")
-      .trim()
-      .slice(0, 60_000);
 
     const anthropic = createAnthropic({ apiKey });
 
