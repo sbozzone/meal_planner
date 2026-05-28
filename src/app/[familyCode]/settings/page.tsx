@@ -77,6 +77,7 @@ export default function SettingsPage() {
         return;
       }
       setMembers(updated);
+      router.refresh(); // re-hydrate server-rendered family context with updated members
     } catch {
       setMembersError("Network error — please try again.");
     } finally {

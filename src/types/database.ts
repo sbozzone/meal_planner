@@ -81,6 +81,8 @@ export const FUN_OPTIONS: { emoji: string; label: string }[] = [
   { emoji: "🏡", label: "Dinner at Friends'" },
   { emoji: "🍕", label: "Pizza Night" },
   { emoji: "🎉", label: "Special Occasion" },
+  { emoji: "🫙", label: "Leftovers" },
+  { emoji: "🤷", label: "Fend for Yourselves" },
 ];
 
 export interface Ingredient {
