@@ -65,6 +65,9 @@ export function PrintSheet({
                     <span className="print-day-num">{day.dayNumber}</span>
                   </td>
                   <td className="print-meal-cell">
+                    {day.chef && (
+                      <div className="print-chef">👨‍🍳 {day.chef}</div>
+                    )}
                     {day.meals.length === 0 && !day.activities?.length ? (
                       <span className="print-empty">-</span>
                     ) : (
