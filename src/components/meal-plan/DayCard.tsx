@@ -1,14 +1,14 @@
 "use client";
 
 import { CalendarClock, Plus, ThumbsDown, ThumbsUp, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { cn, getMealEmoji } from "@/lib/utils";
 import { FUN_OPTIONS } from "@/types/database";
 import type { DayPlan, DinnerActivity, MealPlan } from "@/types/database";
 
 const TODAY = new Date().toISOString().split("T")[0];
 
-export function DayCard({
+export const DayCard = memo(function DayCard({
   day,
   onTapToAssign,
   onAddActivity,
@@ -196,9 +196,9 @@ export function DayCard({
       </div>
     </div>
   );
-}
+});
 
-function MealChip({
+const MealChip = memo(function MealChip({
   meal,
   onRemove,
   familyId,
@@ -325,7 +325,7 @@ function MealChip({
       </button>
     </div>
   );
-}
+});
 
 function getDeviceId() {
   if (typeof window === "undefined") return "server";

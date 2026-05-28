@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { ShoppingItem } from "@/types/database";
@@ -36,7 +36,7 @@ export function useShoppingList() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [family.id, fetchItems]);
 
   async function addItem(name: string) {
     const res = await fetch("/api/shopping", {
@@ -85,15 +85,10 @@ export function useShoppingList() {
     return { ok: false, message: data.error || "Failed to generate list" };
   }
 
-  const uncheckedCount = items.filter((it) => !it.is_checked).length;
-
-  // Group items by category
-  const categories = items.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
-    const cat = item.category || "Other";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  const uncheckedCount = useMemo(
+    () => items.filter((it) => !it.is_checked).length,
+    [items]
+  );
 
   const CATEGORY_ORDER = [
     "Produce",
@@ -109,11 +104,19 @@ export function useShoppingList() {
     "Other",
   ];
 
-  const sortedCategories = Object.entries(categories).sort(
-    ([a], [b]) =>
-      (CATEGORY_ORDER.indexOf(a) === -1 ? 99 : CATEGORY_ORDER.indexOf(a)) -
-      (CATEGORY_ORDER.indexOf(b) === -1 ? 99 : CATEGORY_ORDER.indexOf(b))
-  );
+  const sortedCategories = useMemo(() => {
+    const categories = items.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
+      const cat = item.category || "Other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+    return Object.entries(categories).sort(
+      ([a], [b]) =>
+        (CATEGORY_ORDER.indexOf(a) === -1 ? 99 : CATEGORY_ORDER.indexOf(a)) -
+        (CATEGORY_ORDER.indexOf(b) === -1 ? 99 : CATEGORY_ORDER.indexOf(b))
+    );
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     items,

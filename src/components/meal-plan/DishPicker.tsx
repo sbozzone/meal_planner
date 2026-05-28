@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, Plus, Sparkles, Loader2, ChevronLeft } from "lucide-react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
 import { DISH_TAGS, FUN_OPTIONS, type Dish } from "@/types/database";
@@ -53,15 +53,22 @@ export function DishPicker({
     }
   }, [open]);
 
-  const filtered = dishes.filter((d) => {
-    const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
-    return matchesSearch && matchesTag;
-  });
+  const filtered = useMemo(
+    () =>
+      dishes.filter((d) => {
+        const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
+        const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
+        return matchesSearch && matchesTag;
+      }),
+    [dishes, search, filterTag]
+  );
 
   // Only show tags that are actually used
-  const allUsedTags = [...new Set(dishes.flatMap((d) => d.tags))];
-  const predefinedUsed = DISH_TAGS.filter((t) => allUsedTags.includes(t.value));
+  const allUsedTags = useMemo(() => [...new Set(dishes.flatMap((d) => d.tags))], [dishes]);
+  const predefinedUsed = useMemo(
+    () => DISH_TAGS.filter((t) => allUsedTags.includes(t.value)),
+    [allUsedTags]
+  );
 
   async function handleSuggest() {
     setView("suggest");

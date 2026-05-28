@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { WeekNavigation } from "@/components/meal-plan/WeekNavigation";
 import { DayCard } from "@/components/meal-plan/DayCard";
@@ -47,33 +47,37 @@ export default function MealPlanPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  const daysWithAll = days.map((day) => ({
-    ...day,
-    activities: activities.filter(
-      (activity) => activity.activity_date === day.date
-    ),
-    chef: chefAssignments.find((c) => c.chef_date === day.date)?.chef_name ?? null,
-  }));
+  const daysWithAll = useMemo(
+    () =>
+      days.map((day) => ({
+        ...day,
+        activities: activities.filter(
+          (activity) => activity.activity_date === day.date
+        ),
+        chef: chefAssignments.find((c) => c.chef_date === day.date)?.chef_name ?? null,
+      })),
+    [days, activities, chefAssignments]
+  );
 
-  function handleTapToAssign(date: string) {
+  const handleTapToAssign = useCallback((date: string) => {
     setPickerDate(date);
-  }
+  }, []);
 
-  async function handleSelectDish(dish: Dish) {
+  const handleSelectDish = useCallback(async (dish: Dish) => {
     if (pickerDate) {
       await assignDish(pickerDate, dish.id);
       setPickerDate(null);
     }
-  }
+  }, [pickerDate, assignDish]);
 
-  async function handleSelectCustomMeal(name: string) {
+  const handleSelectCustomMeal = useCallback(async (name: string) => {
     if (pickerDate) {
       await assignCustomMeal(pickerDate, name);
       setPickerDate(null);
     }
-  }
+  }, [pickerDate, assignCustomMeal]);
 
-  async function handleClearWeek() {
+  const handleClearWeek = useCallback(async () => {
     if (confirmClear) {
       await clearWeek();
       setConfirmClear(false);
@@ -81,17 +85,17 @@ export default function MealPlanPage() {
       setConfirmClear(true);
       setTimeout(() => setConfirmClear(false), 3000);
     }
-  }
+  }, [confirmClear, clearWeek]);
 
-  function handleAddActivity(date: string) {
+  const handleAddActivity = useCallback((date: string) => {
     setEditingActivity(null);
     setActivityDate(date);
-  }
+  }, []);
 
-  function handleEditActivity(activity: DinnerActivity) {
+  const handleEditActivity = useCallback((activity: DinnerActivity) => {
     setEditingActivity(activity);
     setActivityDate(activity.activity_date);
-  }
+  }, []);
 
   const currentChefForDate = chefDate
     ? (chefAssignments.find((c) => c.chef_date === chefDate)?.chef_name ?? null)

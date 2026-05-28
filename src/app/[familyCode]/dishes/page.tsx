@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { DishForm } from "@/components/dishes/DishForm";
 import type { DishFormExtras } from "@/components/dishes/DishForm";
@@ -27,18 +27,31 @@ export default function DishesPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showSuggest, setShowSuggest] = useState(false);
 
-  const filtered = dishes.filter((d) => {
-    const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
-    const matchesAppliance = !filterAppliance || d.appliances?.includes(filterAppliance);
-    const matchesMemory = !memoriesOnly || d.is_memory;
-    return matchesSearch && matchesTag && matchesAppliance && matchesMemory;
-  });
+  const filtered = useMemo(
+    () =>
+      dishes.filter((d) => {
+        const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
+        const matchesTag = !filterTag || (d.tags as string[]).includes(filterTag);
+        const matchesAppliance = !filterAppliance || d.appliances?.includes(filterAppliance);
+        const matchesMemory = !memoriesOnly || d.is_memory;
+        return matchesSearch && matchesTag && matchesAppliance && matchesMemory;
+      }),
+    [dishes, search, filterTag, filterAppliance, memoriesOnly]
+  );
 
   // Collect all tags across dishes — predefined first (with color), then custom
-  const allUsedTagValues = [...new Set(dishes.flatMap((d) => d.tags))];
-  const predefinedUsed = DISH_TAGS.filter((t) => allUsedTagValues.includes(t.value));
-  const customUsed = allUsedTagValues.filter((t) => !DISH_TAGS.find((dt) => dt.value === t));
+  const allUsedTagValues = useMemo(
+    () => [...new Set(dishes.flatMap((d) => d.tags))],
+    [dishes]
+  );
+  const predefinedUsed = useMemo(
+    () => DISH_TAGS.filter((t) => allUsedTagValues.includes(t.value)),
+    [allUsedTagValues]
+  );
+  const customUsed = useMemo(
+    () => allUsedTagValues.filter((t) => !DISH_TAGS.find((dt) => dt.value === t)),
+    [allUsedTagValues]
+  );
 
   function handleEdit(dish: Dish) {
     setEditingDish(dish);
