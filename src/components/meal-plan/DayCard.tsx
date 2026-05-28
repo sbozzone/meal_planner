@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { DayPlan, DinnerActivity, MealPlan } from "@/types/database";
 
+const TODAY = new Date().toISOString().split("T")[0];
+
 export function DayCard({
   day,
   onTapToAssign,
@@ -23,27 +25,51 @@ export function DayCard({
   const mainMeal = day.meals[0] ?? null;
   const sideMeals = day.meals.slice(1);
   const activities = day.activities ?? [];
+  const isPast = day.date < TODAY;
+  const isWeekend = ["Saturday", "Sunday"].includes(day.dayName);
+  const fullyEmpty = day.meals.length === 0 && activities.length === 0;
 
   return (
     <div
       className={cn(
-        "rounded-card border transition-colors",
+        "rounded-card border-l-4 border border-r border-t border-b transition-colors overflow-hidden",
         day.isToday
-          ? "border-accent/40 bg-accent-light/50"
-          : "border-border-light bg-card"
+          ? "border-l-accent border-accent/30 bg-accent-light/50"
+          : isPast
+          ? "border-l-border bg-card-header/70 border-border-light"
+          : isWeekend
+          ? "border-l-blue/40 bg-card border-border-light"
+          : "border-l-accent/40 bg-card border-border-light"
       )}
     >
+      {/* Day header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-light/50">
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              "font-medium text-sm",
-              day.isToday ? "text-accent font-semibold" : "text-text"
+              "font-semibold text-base",
+              day.isToday
+                ? "text-accent"
+                : isPast
+                ? "text-text-muted"
+                : "text-text"
             )}
           >
             {day.dayName}
           </span>
-          <span className="text-xs text-text-muted">{day.dayNumber}</span>
+          <span
+            className={cn(
+              "text-sm font-medium",
+              isPast ? "text-text-muted/70" : "text-text-muted"
+            )}
+          >
+            {day.dayNumber}
+          </span>
+          {isWeekend && !day.isToday && (
+            <span className="text-[10px] font-semibold text-blue/80 bg-blue/10 px-1.5 py-0.5 rounded-full">
+              {day.shortName}
+            </span>
+          )}
         </div>
         {day.isToday && (
           <span className="text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -52,11 +78,11 @@ export function DayCard({
         )}
       </div>
 
-      <div className="p-3 min-h-[60px]">
+      <div className="p-3">
+        {/* Meals */}
         {mainMeal && (
           <MealChip meal={mainMeal} onRemove={onRemoveMeal} familyId={familyId} isMain />
         )}
-
         {sideMeals.length > 0 && (
           <div className="mt-1.5 pl-2 space-y-1 border-l-2 border-border-light">
             {sideMeals.map((meal) => (
@@ -65,23 +91,24 @@ export function DayCard({
           </div>
         )}
 
+        {/* Activities */}
         {activities.length > 0 && (
           <div className="mt-3 space-y-1.5">
             {activities.map((activity) => (
               <button
                 key={activity.id}
-                className="flex w-full items-start gap-2 rounded-lg border border-gold/25 bg-gold/10 px-3 py-2 text-left text-sm text-text-secondary"
+                className="flex w-full items-start gap-2 rounded-lg border border-blue/20 bg-blue/10 px-3 py-2 text-left text-sm text-text-secondary hover:bg-blue/15 transition-colors"
                 type="button"
                 onClick={() => onEditActivity(activity)}
               >
-                <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold text-text">
                     {activity.title}
                   </span>
-                  <span className="block text-xs">
+                  <span className="block text-xs text-text-muted">
                     {formatActivityTime(activity)}
-                    {activity.notes ? ` - ${activity.notes}` : ""}
+                    {activity.notes ? ` · ${activity.notes}` : ""}
                   </span>
                 </span>
               </button>
@@ -89,27 +116,59 @@ export function DayCard({
           </div>
         )}
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-        <button
-          onClick={() => onTapToAssign(day.date)}
-          className={cn(
-            "flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted hover:border-accent/40 hover:text-accent hover:bg-accent-light/30 transition-colors min-h-touch",
-            day.meals.length > 0 ? "py-1" : "py-3"
+        {/* Action buttons */}
+        <div className={cn("mt-2 grid gap-2", fullyEmpty ? "grid-cols-1" : "grid-cols-2")}>
+          {/* Dinner button */}
+          {fullyEmpty ? (
+            <button
+              onClick={() => onTapToAssign(day.date)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 rounded-xl transition-colors min-h-[72px]",
+                isPast
+                  ? "bg-card-header text-text-muted hover:text-text-secondary"
+                  : "bg-accent-light/60 text-accent-dark hover:bg-accent-light"
+              )}
+            >
+              <span className="text-2xl leading-none">🍽️</span>
+              <span className="text-sm font-medium">
+                {isPast ? "Add dinner" : "What's cooking?"}
+              </span>
+              {!isPast && (
+                <span className="text-[11px] text-text-muted">Free night? Takeout?</span>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => onTapToAssign(day.date)}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-card-header hover:bg-border text-text-secondary hover:text-accent transition-colors min-h-touch py-1 text-sm font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {day.meals.length === 0 ? "Add dinner" : "Add side"}
+            </button>
           )}
-        >
-          <Plus className="w-4 h-4" />
-          <span className="text-sm">
-            {day.meals.length === 0 ? "Add dinner" : "Add side dish"}
-          </span>
-        </button>
-        <button
-          onClick={() => onAddActivity(day.date)}
-          className="flex min-h-touch items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-text-muted transition-colors hover:border-gold/50 hover:bg-gold/10 hover:text-text"
-        >
-          <CalendarClock className="h-4 w-4" />
-          <span className="text-sm">Add activity</span>
-        </button>
+
+          {/* Activity button */}
+          {!fullyEmpty && (
+            <button
+              onClick={() => onAddActivity(day.date)}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-card-header hover:bg-blue/10 text-text-secondary hover:text-blue transition-colors min-h-touch py-1 text-sm font-medium"
+            >
+              <CalendarClock className="h-3.5 w-3.5" />
+              Add activity
+            </button>
+          )}
         </div>
+
+        {/* Add activity link for fully-empty days */}
+        {fullyEmpty && (
+          <button
+            onClick={() => onAddActivity(day.date)}
+            className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-text-muted hover:text-blue transition-colors py-1.5"
+          >
+            <CalendarClock className="h-3.5 w-3.5" />
+            Add activity
+          </button>
+        )}
       </div>
     </div>
   );
@@ -175,10 +234,10 @@ function MealChip({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg px-3",
+        "flex items-center gap-2 rounded-xl px-3 shadow-sm",
         isMain
-          ? "bg-accent-light/70 text-accent-dark py-2.5"
-          : "bg-bg text-text-secondary border border-border-light py-2"
+          ? "bg-accent-light text-accent-dark py-3 border border-accent/20"
+          : "bg-card text-text-secondary border border-border-light py-2"
       )}
     >
       {!isMain && (
@@ -186,7 +245,14 @@ function MealChip({
           Side
         </span>
       )}
-      <span className="flex-1 text-sm font-medium truncate">{name}</span>
+      <span
+        className={cn(
+          "flex-1 truncate font-semibold",
+          isMain ? "text-base text-accent-dark" : "text-sm text-text"
+        )}
+      >
+        {name}
+      </span>
       <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={(e) => {
@@ -251,7 +317,7 @@ function formatActivityTime(activity: DinnerActivity) {
   const start = formatTime(activity.start_time);
   const end = formatTime(activity.end_time);
 
-  if (start && end) return `${start}-${end}`;
+  if (start && end) return `${start}–${end}`;
   if (start) return start;
   if (end) return `until ${end}`;
   return "Dinner impact";

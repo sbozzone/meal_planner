@@ -29,15 +29,30 @@ export function BottomNav({ familyCode }: { familyCode: string }) {
             <Link
               key={tab.label}
               href={fullPath}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-touch px-3 py-1 rounded-lg transition-colors",
-                isActive
-                  ? "text-accent"
-                  : "text-text-muted hover:text-text-secondary"
-              )}
+              className="flex flex-col items-center justify-center gap-0.5 min-w-[64px] min-h-touch px-2 py-1"
             >
-              <tab.icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-xs font-medium">{tab.label}</span>
+              <span
+                className={cn(
+                  "flex items-center justify-center w-10 h-7 rounded-full transition-colors",
+                  isActive ? "bg-accent/15" : ""
+                )}
+              >
+                <tab.icon
+                  className={cn(
+                    "w-5 h-5 transition-colors",
+                    isActive ? "text-accent" : "text-text-secondary"
+                  )}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-medium transition-colors",
+                  isActive ? "text-accent" : "text-text-secondary"
+                )}
+              >
+                {tab.label}
+              </span>
             </Link>
           );
         })}
