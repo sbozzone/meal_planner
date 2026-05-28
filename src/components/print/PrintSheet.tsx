@@ -1,4 +1,12 @@
 import type { DayPlan, ShoppingItem } from "@/types/database";
+import { FUN_OPTIONS } from "@/types/database";
+import { getMealEmoji } from "@/lib/utils";
+
+function getMealDisplay(name: string): string {
+  const funOption = FUN_OPTIONS.find((o) => o.label === name);
+  const emoji = funOption ? funOption.emoji : getMealEmoji(name);
+  return emoji ? `${emoji} ${name}` : name;
+}
 
 export function PrintSheet({
   familyName,
@@ -69,7 +77,7 @@ export function PrintSheet({
                             {i > 0 && (
                               <span className="print-side-label">side: </span>
                             )}
-                            {meal.dish?.name || meal.custom_name || "-"}
+                            {getMealDisplay(meal.dish?.name || meal.custom_name || "-")}
                           </div>
                         ))}
                         {day.activities?.map((activity) => (
