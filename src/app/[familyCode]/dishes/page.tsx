@@ -203,18 +203,19 @@ export default function DishesPage() {
           </button>
           <button
             onClick={() => setShowImport(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
             title="Import from URL"
           >
-            <Link className="w-4 h-4" />
+            <Link className="w-4 h-4 shrink-0" />
             Import URL
           </button>
           <button
             onClick={() => setShowSuggest(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
             title="AI dish suggestions"
           >
-            <Wand2 className="w-4 h-4" />
+            <Wand2 className="w-4 h-4 shrink-0" />
+            Suggest
           </button>
         </div>
 
