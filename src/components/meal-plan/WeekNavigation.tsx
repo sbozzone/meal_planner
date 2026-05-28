@@ -2,24 +2,27 @@
 
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { WeekMode } from "@/hooks/useWeekNavigation";
 
 export function WeekNavigation({
   weekLabel,
+  mode,
+  onToggleMode,
   onPrev,
   onNext,
-  onToday,
   onClearWeek,
   confirmClear,
 }: {
   weekLabel: string;
+  mode: WeekMode;
+  onToggleMode: () => void;
   onPrev: () => void;
   onNext: () => void;
-  onToday: () => void;
   onClearWeek: () => void;
   confirmClear?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center justify-between px-4 py-2">
       <div className="flex items-center gap-1">
         <button
           onClick={onPrev}
@@ -28,12 +31,16 @@ export function WeekNavigation({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
+
         <button
-          onClick={onToday}
-          className="px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary hover:bg-card-header transition-colors"
+          type="button"
+          className="px-2 py-1.5 rounded-lg text-sm font-medium text-text cursor-default select-none"
+          tabIndex={-1}
+          aria-label="Current week range"
         >
           {weekLabel}
         </button>
+
         <button
           onClick={onNext}
           className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
@@ -41,6 +48,31 @@ export function WeekNavigation({
         >
           <ChevronRight className="w-5 h-5" />
         </button>
+
+        <div className="ml-1 flex items-center rounded-full border border-border bg-card-header p-0.5">
+          <button
+            onClick={() => mode !== "7-day" && onToggleMode()}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              mode === "7-day"
+                ? "bg-accent text-white"
+                : "text-text-muted hover:text-text"
+            )}
+          >
+            7-day
+          </button>
+          <button
+            onClick={() => mode !== "mon-sun" && onToggleMode()}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              mode === "mon-sun"
+                ? "bg-accent text-white"
+                : "text-text-muted hover:text-text"
+            )}
+          >
+            Mon–Sun
+          </button>
+        </div>
       </div>
 
       <button
@@ -53,7 +85,7 @@ export function WeekNavigation({
         )}
       >
         <RotateCcw className="w-4 h-4" />
-        <span>{confirmClear ? "Tap to confirm" : "Clear"}</span>
+        <span>{confirmClear ? "Confirm" : "Clear"}</span>
       </button>
     </div>
   );

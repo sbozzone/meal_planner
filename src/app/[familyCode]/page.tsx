@@ -19,7 +19,7 @@ import type { DinnerActivity, Dish } from "@/types/database";
 
 export default function MealPlanPage() {
   const { family } = useFamily();
-  const { weekStart, weekLabel, goToPrevWeek, goToNextWeek, goToToday } =
+  const { weekStart, weekLabel, mode, toggleMode, goToPrevWeek, goToNextWeek } =
     useWeekNavigation();
   const { days, loading, assignDish, removeMeal, clearWeek } =
     useMealPlan(weekStart);
@@ -90,9 +90,10 @@ export default function MealPlanPage() {
 
       <WeekNavigation
         weekLabel={weekLabel}
+        mode={mode}
+        onToggleMode={toggleMode}
         onPrev={goToPrevWeek}
         onNext={goToNextWeek}
-        onToday={goToToday}
         onClearWeek={handleClearWeek}
         confirmClear={confirmClear}
       />

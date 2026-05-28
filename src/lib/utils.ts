@@ -27,7 +27,9 @@ export function getWeekDays(weekStart: string) {
 
 export function formatWeekLabel(weekStart: string): string {
   const start = parseISO(weekStart);
-  return `Week of ${format(start, "MMMM d")}`;
+  const end = addDays(start, 6);
+  const endFmt = start.getMonth() === end.getMonth() ? "d" : "MMM d";
+  return `${format(start, "MMM d")} – ${format(end, endFmt)}`;
 }
 
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
