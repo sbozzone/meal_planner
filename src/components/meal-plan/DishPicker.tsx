@@ -15,14 +15,6 @@ interface Suggestion {
 
 type View = "list" | "suggest";
 
-const FUN_OPTIONS = [
-  { emoji: "🌙", label: "Date Night" },
-  { emoji: "🥡", label: "Screw it — Takeout" },
-  { emoji: "🏡", label: "Dinner at Friends'" },
-  { emoji: "🍕", label: "Pizza Night" },
-  { emoji: "🎉", label: "Special Occasion" },
-];
-
 export function DishPicker({
   open,
   date,
