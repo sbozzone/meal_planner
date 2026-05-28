@@ -36,7 +36,7 @@ export function useDishes() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [family.id, fetchDishes]);
 
   async function addDish(
     name: string,

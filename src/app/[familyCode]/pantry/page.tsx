@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { PantryForm } from "@/components/pantry/PantryForm";
 import { usePantry } from "@/hooks/usePantry";
@@ -16,16 +16,24 @@ export default function PantryPage() {
   const [expiringOnly, setExpiringOnly] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  const visible = expiringOnly
-    ? items.filter((item) => item.daysUntilExpiry !== null && (item.daysUntilExpiry ?? 999) <= 7)
-    : items;
+  const visible = useMemo(
+    () =>
+      expiringOnly
+        ? items.filter((item) => item.daysUntilExpiry !== null && (item.daysUntilExpiry ?? 999) <= 7)
+        : items,
+    [items, expiringOnly]
+  );
 
-  const grouped = visible.reduce<Record<string, PantryItem[]>>((acc, item) => {
-    const category = item.category || "Other";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(item);
-    return acc;
-  }, {});
+  const grouped = useMemo(
+    () =>
+      visible.reduce<Record<string, PantryItem[]>>((acc, item) => {
+        const category = item.category || "Other";
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(item);
+        return acc;
+      }, {}),
+    [visible]
+  );
 
   function toggleCategory(category: string) {
     setCollapsed((prev) => {

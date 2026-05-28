@@ -41,7 +41,7 @@ export function useMealPlan(weekStart: string) {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [family.id, fetchMeals]);
 
   const days: DayPlan[] = getWeekDays(weekStart).map((day) => ({
     ...day,

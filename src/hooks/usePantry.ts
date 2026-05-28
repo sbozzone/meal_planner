@@ -42,7 +42,7 @@ export function usePantry() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [family.id, fetchItems]);
 
   async function addItem(input: PantryInput) {
     const res = await fetch("/api/pantry", {

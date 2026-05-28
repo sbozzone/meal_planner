@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { useWeekNavigation } from "@/hooks/useWeekNavigation";
@@ -48,8 +48,8 @@ export default function ShoppingPage() {
     });
   }
 
-  const unchecked = items.filter((it) => !it.is_checked);
-  const checked = items.filter((it) => it.is_checked);
+  const unchecked = useMemo(() => items.filter((it) => !it.is_checked), [items]);
+  const checked = useMemo(() => items.filter((it) => it.is_checked), [items]);
   const hasCategories = sortedCategories.some(([cat]) => cat !== "Other");
 
   return (
