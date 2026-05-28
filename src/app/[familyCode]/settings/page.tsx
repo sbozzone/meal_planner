@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [members, setMembers] = useState<string[]>(family.members ?? []);
   const [newMember, setNewMember] = useState("");
   const [savingMembers, setSavingMembers] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
   const shareUrl =
     typeof window !== "undefined"
@@ -60,8 +61,9 @@ export default function SettingsPage() {
 
   async function saveMembers(updated: string[]) {
     setSavingMembers(true);
+    setMembersError(null);
     try {
-      await fetch("/api/families/members", {
+      const res = await fetch("/api/families/members", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -69,7 +71,14 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({ members: updated }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setMembersError(data.error || "Failed to save — make sure migration 004 is applied in Supabase.");
+        return;
+      }
       setMembers(updated);
+    } catch {
+      setMembersError("Network error — please try again.");
     } finally {
       setSavingMembers(false);
     }
@@ -185,6 +194,9 @@ export default function SettingsPage() {
               <Plus className="w-4 h-4" />
             </button>
           </div>
+          {membersError && (
+            <p className="text-xs text-red mt-2">{membersError}</p>
+          )}
         </div>
 
         <button
