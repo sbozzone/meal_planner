@@ -3,6 +3,7 @@
 import { CalendarClock, Plus, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { FUN_OPTIONS } from "@/types/database";
 import type { DayPlan, DinnerActivity, MealPlan } from "@/types/database";
 
 const TODAY = new Date().toISOString().split("T")[0];
@@ -186,6 +187,7 @@ function MealChip({
   isMain?: boolean;
 }) {
   const name = meal.dish?.name || meal.custom_name || "Unknown dish";
+  const funOption = FUN_OPTIONS.find((o) => o.label === name);
   const [deviceId, setDeviceId] = useState("");
   const [voteCount, setVoteCount] = useState(meal.vote_count || 0);
   const [userVote, setUserVote] = useState<1 | -1 | null>(null);
@@ -247,11 +249,12 @@ function MealChip({
       )}
       <span
         className={cn(
-          "flex-1 truncate font-semibold",
+          "flex-1 flex items-center gap-1.5 truncate font-semibold",
           isMain ? "text-base text-accent-dark" : "text-sm text-text"
         )}
       >
-        {name}
+        {funOption && <span className="text-base leading-none">{funOption.emoji}</span>}
+        <span className="truncate">{name}</span>
       </span>
       <div className="flex items-center gap-1 shrink-0">
         <button
