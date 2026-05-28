@@ -15,6 +15,14 @@ interface Suggestion {
 
 type View = "list" | "suggest";
 
+const FUN_OPTIONS = [
+  { emoji: "🌙", label: "Date Night" },
+  { emoji: "🥡", label: "Screw it — Takeout" },
+  { emoji: "🏡", label: "Dinner at Friends'" },
+  { emoji: "🍕", label: "Pizza Night" },
+  { emoji: "🎉", label: "Special Occasion" },
+];
+
 export function DishPicker({
   open,
   date,
@@ -23,6 +31,7 @@ export function DishPicker({
   onSelect,
   onAddNew,
   onAddAndSelect,
+  onSelectCustom,
 }: {
   open: boolean;
   date: string | null;
@@ -31,6 +40,7 @@ export function DishPicker({
   onSelect: (dish: Dish) => void;
   onAddNew: () => void;
   onAddAndSelect: (name: string) => Promise<void>;
+  onSelectCustom: (name: string) => Promise<void>;
 }) {
   const { family } = useFamily();
   const [search, setSearch] = useState("");
@@ -200,6 +210,23 @@ export function DishPicker({
               <Sparkles className="w-4 h-4" />
               Suggest something for me
             </button>
+
+            {/* Fun quick-pick options */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {FUN_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={async () => {
+                    await onSelectCustom(opt.label);
+                    onClose();
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-card-header border border-border text-text-secondary hover:border-accent/40 hover:text-accent hover:bg-accent-light/30 transition-colors text-sm font-medium min-h-[36px]"
+                >
+                  <span>{opt.emoji}</span>
+                  <span>{opt.label}</span>
+                </button>
+              ))}
+            </div>
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />

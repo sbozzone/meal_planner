@@ -48,6 +48,20 @@ export function useMealPlan(weekStart: string) {
     meals: meals.filter((m) => m.meal_date === day.date),
   }));
 
+  async function assignCustomMeal(date: string, name: string) {
+    const res = await fetch("/api/meal-plan", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ custom_name: name, meal_date: date }),
+    });
+    if (res.ok) {
+      const meal = await res.json();
+      setMeals((prev) => [...prev, meal]);
+      return meal;
+    }
+    return null;
+  }
+
   async function assignDish(date: string, dishId: string) {
     const res = await fetch("/api/meal-plan", {
       method: "POST",
@@ -83,5 +97,5 @@ export function useMealPlan(weekStart: string) {
     }
   }
 
-  return { days, meals, loading, assignDish, removeMeal, clearWeek, refetch: fetchMeals };
+  return { days, meals, loading, assignDish, assignCustomMeal, removeMeal, clearWeek, refetch: fetchMeals };
 }
