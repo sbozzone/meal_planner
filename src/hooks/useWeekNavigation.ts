@@ -7,8 +7,8 @@ import { addDays, parseISO, format } from "date-fns";
 export type WeekMode = "7-day" | "mon-sun";
 
 export function useWeekNavigation() {
-  const [mode, setMode] = useState<WeekMode>("mon-sun");
-  const [weekStart, setWeekStart] = useState(() => getWeekStart());
+  const [mode, setMode] = useState<WeekMode>("7-day");
+  const [weekStart, setWeekStart] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
   const weekLabel = formatWeekLabel(weekStart);
 
