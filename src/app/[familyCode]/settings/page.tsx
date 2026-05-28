@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFamily } from "@/lib/family-context";
 import { Header } from "@/components/layout/Header";
-import { Copy, Check, Share2, LogOut } from "lucide-react";
+import { Copy, Check, Share2, LogOut, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,9 @@ export default function SettingsPage() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [members, setMembers] = useState<string[]>(family.members ?? []);
+  const [newMember, setNewMember] = useState("");
+  const [savingMembers, setSavingMembers] = useState(false);
 
   const shareUrl =
     typeof window !== "undefined"
@@ -55,11 +58,41 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveMembers(updated: string[]) {
+    setSavingMembers(true);
+    try {
+      await fetch("/api/families/members", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-family-id": family.id,
+        },
+        body: JSON.stringify({ members: updated }),
+      });
+      setMembers(updated);
+    } finally {
+      setSavingMembers(false);
+    }
+  }
+
+  function addMember() {
+    const name = newMember.trim();
+    if (!name || members.includes(name)) return;
+    const updated = [...members, name];
+    setNewMember("");
+    saveMembers(updated);
+  }
+
+  function removeMember(name: string) {
+    saveMembers(members.filter((m) => m !== name));
+  }
+
   return (
     <>
       <Header title="Settings" familyCode={family.share_code} />
 
       <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
+        {/* Share family */}
         <div className="bg-card border border-border-light rounded-card p-5">
           <h2 className="font-serif text-lg font-semibold text-text mb-1">
             {family.name}
@@ -101,6 +134,57 @@ export default function SettingsPage() {
             <Share2 className="w-4 h-4" />
             Share with Family
           </button>
+        </div>
+
+        {/* Family chefs */}
+        <div className="bg-card border border-border-light rounded-card p-5">
+          <h2 className="font-serif text-lg font-semibold text-text mb-1">
+            👨‍🍳 Family Chefs
+          </h2>
+          <p className="text-sm text-text-secondary mb-4">
+            Add names to quickly assign who's cooking each night.
+          </p>
+
+          {members.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {members.map((name) => (
+                <div
+                  key={name}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-card-header border border-border rounded-full text-sm font-medium text-text"
+                >
+                  <span>{name}</span>
+                  <button
+                    onClick={() => removeMember(name)}
+                    disabled={savingMembers}
+                    className="text-text-muted hover:text-red transition-colors"
+                    aria-label={`Remove ${name}`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newMember}
+              onChange={(e) => setNewMember(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addMember()}
+              placeholder="Add a name (e.g. Mom, Dad, Tyler)"
+              className="flex-1 px-4 py-2.5 bg-bg border border-border rounded-lg text-sm placeholder:text-text-muted"
+              disabled={savingMembers}
+            />
+            <button
+              onClick={addMember}
+              disabled={!newMember.trim() || savingMembers}
+              className="px-3 py-2.5 rounded-lg bg-accent text-white disabled:opacity-40 hover:bg-accent-hover transition-colors"
+              aria-label="Add member"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <button

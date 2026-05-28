@@ -14,6 +14,7 @@ export function DayCard({
   onAddActivity,
   onEditActivity,
   onRemoveMeal,
+  onSetChef,
   familyId,
 }: {
   day: DayPlan;
@@ -21,11 +22,13 @@ export function DayCard({
   onAddActivity: (date: string) => void;
   onEditActivity: (activity: DinnerActivity) => void;
   onRemoveMeal: (mealId: string) => void;
+  onSetChef: (date: string) => void;
   familyId: string;
 }) {
   const mainMeal = day.meals[0] ?? null;
   const sideMeals = day.meals.slice(1);
   const activities = day.activities ?? [];
+  const chef = day.chef ?? null;
   const isPast = day.date < TODAY;
   const isWeekend = ["Saturday", "Sunday"].includes(day.dayName);
   const fullyEmpty = day.meals.length === 0 && activities.length === 0;
@@ -72,11 +75,31 @@ export function DayCard({
             </span>
           )}
         </div>
-        {day.isToday && (
-          <span className="text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
-            Today
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {chef && (
+            <button
+              onClick={() => onSetChef(day.date)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-text-secondary bg-card-header border border-border px-2 py-0.5 rounded-full hover:border-accent/40 hover:text-accent transition-colors"
+            >
+              <span>👨‍🍳</span>
+              <span>{chef}</span>
+            </button>
+          )}
+          {!chef && (
+            <button
+              onClick={() => onSetChef(day.date)}
+              className="text-[11px] text-text-muted hover:text-accent transition-colors px-1"
+              aria-label="Set chef"
+            >
+              👨‍🍳
+            </button>
+          )}
+          {day.isToday && (
+            <span className="text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Today
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="p-3">

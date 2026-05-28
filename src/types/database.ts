@@ -94,8 +94,17 @@ export interface Family {
   id: string;
   name: string;
   share_code: string;
+  members: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface ChefAssignment {
+  id: string;
+  family_id: string;
+  chef_date: string;
+  chef_name: string;
+  created_at: string;
 }
 
 export interface Dish {
@@ -167,6 +176,7 @@ export interface DayPlan {
   isToday: boolean;
   meals: MealPlan[];
   activities?: DinnerActivity[];
+  chef?: string | null;
 }
 
 export interface PantryItem {

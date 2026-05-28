@@ -6,12 +6,14 @@ import { WeekNavigation } from "@/components/meal-plan/WeekNavigation";
 import { DayCard } from "@/components/meal-plan/DayCard";
 import { DishPicker } from "@/components/meal-plan/DishPicker";
 import { ActivitySheet } from "@/components/meal-plan/ActivitySheet";
+import { ChefPickerSheet } from "@/components/meal-plan/ChefPickerSheet";
 import { DishForm } from "@/components/dishes/DishForm";
 import { PrintSheet } from "@/components/print/PrintSheet";
 import { TemplatesModal } from "@/components/templates/TemplatesModal";
 import { useWeekNavigation } from "@/hooks/useWeekNavigation";
 import { useMealPlan } from "@/hooks/useMealPlan";
 import { useDinnerActivities } from "@/hooks/useDinnerActivities";
+import { useChefAssignments } from "@/hooks/useChefAssignments";
 import { useDishes } from "@/hooks/useDishes";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { useFamily } from "@/lib/family-context";
@@ -30,6 +32,8 @@ export default function MealPlanPage() {
     updateActivity,
     deleteActivity,
   } = useDinnerActivities(weekStart);
+  const { assignments: chefAssignments, setChef, clearChef } =
+    useChefAssignments(weekStart);
   const { dishes, addDish } = useDishes();
   const { items } = useShoppingList();
 
@@ -37,15 +41,18 @@ export default function MealPlanPage() {
   const [activityDate, setActivityDate] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] =
     useState<DinnerActivity | null>(null);
+  const [chefDate, setChefDate] = useState<string | null>(null);
   const [pendingDate, setPendingDate] = useState<string | null>(null);
   const [showAddDish, setShowAddDish] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
-  const daysWithActivities = days.map((day) => ({
+
+  const daysWithAll = days.map((day) => ({
     ...day,
     activities: activities.filter(
       (activity) => activity.activity_date === day.date
     ),
+    chef: chefAssignments.find((c) => c.chef_date === day.date)?.chef_name ?? null,
   }));
 
   function handleTapToAssign(date: string) {
@@ -86,6 +93,10 @@ export default function MealPlanPage() {
     setActivityDate(activity.activity_date);
   }
 
+  const currentChefForDate = chefDate
+    ? (chefAssignments.find((c) => c.chef_date === chefDate)?.chef_name ?? null)
+    : null;
+
   return (
     <>
       <Header
@@ -117,7 +128,7 @@ export default function MealPlanPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {daysWithActivities.map((day) => (
+            {daysWithAll.map((day) => (
               <DayCard
                 key={day.date}
                 day={day}
@@ -125,6 +136,7 @@ export default function MealPlanPage() {
                 onAddActivity={handleAddActivity}
                 onEditActivity={handleEditActivity}
                 onRemoveMeal={removeMeal}
+                onSetChef={setChefDate}
                 familyId={family.id}
               />
             ))}
@@ -135,7 +147,7 @@ export default function MealPlanPage() {
       <PrintSheet
         familyName={family.name}
         weekLabel={weekLabel}
-        days={daysWithActivities}
+        days={daysWithAll}
         items={items}
       />
 
@@ -214,6 +226,20 @@ export default function MealPlanPage() {
           }
         }}
         onDelete={deleteActivity}
+      />
+
+      <ChefPickerSheet
+        open={chefDate !== null}
+        date={chefDate}
+        currentChef={currentChefForDate}
+        members={family.members ?? []}
+        onClose={() => setChefDate(null)}
+        onSave={async (name) => {
+          if (chefDate) await setChef(chefDate, name);
+        }}
+        onClear={async () => {
+          if (chefDate) await clearChef(chefDate);
+        }}
       />
     </>
   );

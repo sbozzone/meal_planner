@@ -182,6 +182,13 @@
     margin-top: 2pt;
   }
 
+  .print-chef {
+    font-size: 8pt;
+    color: #6a5f4e;
+    font-weight: 600;
+    margin-bottom: 2pt;
+  }
+
   .print-activity {
     font-size: 8.5pt;
     color: #7a5a12;
