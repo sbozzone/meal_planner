@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, Plus, Sparkles, Loader2, ChevronLeft } from "lucide-react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
-import { DISH_TAGS, type Dish } from "@/types/database";
+import { DISH_TAGS, FUN_OPTIONS, type Dish } from "@/types/database";
 import { useFamily } from "@/lib/family-context";
 import { cn } from "@/lib/utils";
 
@@ -14,14 +14,6 @@ interface Suggestion {
 }
 
 type View = "list" | "suggest";
-
-const FUN_OPTIONS = [
-  { emoji: "🌙", label: "Date Night" },
-  { emoji: "🥡", label: "Screw it — Takeout" },
-  { emoji: "🏡", label: "Dinner at Friends'" },
-  { emoji: "🍕", label: "Pizza Night" },
-  { emoji: "🎉", label: "Special Occasion" },
-];
 
 export function DishPicker({
   open,

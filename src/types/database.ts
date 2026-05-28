@@ -75,6 +75,14 @@ export const APPLIANCES = [
 
 export type Appliance = (typeof APPLIANCES)[number];
 
+export const FUN_OPTIONS: { emoji: string; label: string }[] = [
+  { emoji: "🌙", label: "Date Night" },
+  { emoji: "🥡", label: "Screw it — Takeout" },
+  { emoji: "🏡", label: "Dinner at Friends'" },
+  { emoji: "🍕", label: "Pizza Night" },
+  { emoji: "🎉", label: "Special Occasion" },
+];
+
 export interface Ingredient {
   name: string;
   quantity: string;
