@@ -172,7 +172,7 @@ export default function LandingPage() {
             {!hasFamily && (
               <section className="rounded-card border border-white/15 bg-[#fff8ea]/95 p-4 text-text shadow-2xl backdrop-blur">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
-                  Family DinnerTime
+                  🧑‍🍳 Family DinnerTime
                 </p>
                 <h1 className="mt-1 font-serif text-3xl font-bold leading-tight">
                   Dinner plans everyone can see.
