@@ -6,10 +6,11 @@ import { DishForm } from "@/components/dishes/DishForm";
 import type { DishFormExtras } from "@/components/dishes/DishForm";
 import { ImportUrlSheet } from "@/components/dishes/ImportUrlSheet";
 import { MemoryModal } from "@/components/dishes/MemoryModal";
+import { DishSuggestSheet } from "@/components/dishes/DishSuggestSheet";
 import { useDishes } from "@/hooks/useDishes";
 import { useFamily } from "@/lib/family-context";
 import { APPLIANCES, DISH_TAGS, type Dish } from "@/types/database";
-import { Plus, Search, Trash2, Pencil, Link, Sparkles } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Link, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DishesPage() {
@@ -24,6 +25,7 @@ export default function DishesPage() {
   const [memoriesOnly, setMemoriesOnly] = useState(false);
   const [memoryDish, setMemoryDish] = useState<Dish | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const filtered = dishes.filter((d) => {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
@@ -207,6 +209,13 @@ export default function DishesPage() {
             <Link className="w-4 h-4" />
             Import URL
           </button>
+          <button
+            onClick={() => setShowSuggest(true)}
+            className="flex items-center justify-center gap-2 px-4 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            title="AI dish suggestions"
+          >
+            <Wand2 className="w-4 h-4" />
+          </button>
         </div>
 
         {loading ? (
@@ -330,6 +339,15 @@ export default function DishesPage() {
         onClose={() => setShowImport(false)}
         onSave={async (name, tags, ingredients) => {
           await addDish(name, tags, ingredients);
+        }}
+      />
+
+      <DishSuggestSheet
+        open={showSuggest}
+        familyId={family.id}
+        onClose={() => setShowSuggest(false)}
+        onAdd={async (name, tags) => {
+          await addDish(name, tags, []);
         }}
       />
 
