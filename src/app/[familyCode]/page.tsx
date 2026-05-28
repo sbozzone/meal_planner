@@ -21,7 +21,7 @@ export default function MealPlanPage() {
   const { family } = useFamily();
   const { weekStart, weekLabel, mode, toggleMode, goToPrevWeek, goToNextWeek } =
     useWeekNavigation();
-  const { days, loading, assignDish, removeMeal, clearWeek } =
+  const { days, loading, assignDish, assignCustomMeal, removeMeal, clearWeek } =
     useMealPlan(weekStart);
   const {
     activities,
@@ -55,6 +55,13 @@ export default function MealPlanPage() {
   async function handleSelectDish(dish: Dish) {
     if (pickerDate) {
       await assignDish(pickerDate, dish.id);
+      setPickerDate(null);
+    }
+  }
+
+  async function handleSelectCustomMeal(name: string) {
+    if (pickerDate) {
+      await assignCustomMeal(pickerDate, name);
       setPickerDate(null);
     }
   }
@@ -149,6 +156,7 @@ export default function MealPlanPage() {
             await assignDish(pickerDate, dish.id);
           }
         }}
+        onSelectCustom={handleSelectCustomMeal}
       />
 
       <DishForm
