@@ -283,7 +283,7 @@ export default function LandingPage() {
           type="text"
           placeholder="Enter family code"
           value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && handleJoin()}
           className="w-full px-4 py-3 bg-card border border-border rounded-card text-lg placeholder:text-text-muted mb-4 text-center tracking-widest uppercase"
           autoFocus
