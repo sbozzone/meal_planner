@@ -39,13 +39,8 @@ export default function LandingPage() {
 
   useEffect(() => {
     const code = localStorage.getItem("familyCode");
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("splash")) {
-      setHasFamily(!!code);
-      return;
-    }
-    if (code) router.replace(`/${code}`);
-  }, [router]);
+    setHasFamily(!!code);
+  }, []);
 
   useEffect(() => {
     if (mode !== "home") return;
