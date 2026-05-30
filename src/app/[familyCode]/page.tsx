@@ -16,6 +16,7 @@ import { useDinnerActivities } from "@/hooks/useDinnerActivities";
 import { useChefAssignments } from "@/hooks/useChefAssignments";
 import { useDishes } from "@/hooks/useDishes";
 import { useShoppingList } from "@/hooks/useShoppingList";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import { useFamily } from "@/lib/family-context";
 import type { DinnerActivity, Dish } from "@/types/database";
 
@@ -45,7 +46,7 @@ export default function MealPlanPage() {
   const [pendingDate, setPendingDate] = useState<string | null>(null);
   const [showAddDish, setShowAddDish] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [confirmClear, setConfirmClear] = useState(false);
+  const clearConfirm = useConfirmAction(clearWeek);
 
   const daysWithAll = useMemo(
     () =>
@@ -77,16 +78,6 @@ export default function MealPlanPage() {
     }
   }, [pickerDate, assignCustomMeal]);
 
-  const handleClearWeek = useCallback(async () => {
-    if (confirmClear) {
-      await clearWeek();
-      setConfirmClear(false);
-    } else {
-      setConfirmClear(true);
-      setTimeout(() => setConfirmClear(false), 3000);
-    }
-  }, [confirmClear, clearWeek]);
-
   const handleAddActivity = useCallback((date: string) => {
     setEditingActivity(null);
     setActivityDate(date);
@@ -116,8 +107,8 @@ export default function MealPlanPage() {
         onToggleMode={toggleMode}
         onPrev={goToPrevWeek}
         onNext={goToNextWeek}
-        onClearWeek={handleClearWeek}
-        confirmClear={confirmClear}
+        onClearWeek={clearConfirm.trigger}
+        confirmClear={clearConfirm.armed}
       />
 
       <main className="px-4 pb-4 max-w-3xl mx-auto print:hidden">
@@ -126,16 +117,17 @@ export default function MealPlanPage() {
             {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="h-24 rounded-card bg-card animate-pulse border border-border-light"
+                className="h-28 animate-pulse rounded-2xl border border-border-light bg-card/70 shadow-warm-sm"
               />
             ))}
           </div>
         ) : (
           <div className="space-y-3">
-            {daysWithAll.map((day) => (
+            {daysWithAll.map((day, i) => (
               <DayCard
                 key={day.date}
                 day={day}
+                index={i}
                 onTapToAssign={handleTapToAssign}
                 onAddActivity={handleAddActivity}
                 onEditActivity={handleEditActivity}

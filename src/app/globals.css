@@ -11,6 +11,12 @@
   body {
     @apply bg-bg text-text font-sans antialiased;
     padding-top: env(safe-area-inset-top, 0px);
+    /* Soft layered warmth so the cream backdrop reads as paper, not a flat fill */
+    background-color: #EDE6D6;
+    background-image:
+      radial-gradient(120% 80% at 50% -10%, rgba(201, 104, 64, 0.10) 0%, rgba(201, 104, 64, 0) 55%),
+      radial-gradient(90% 60% at 100% 100%, rgba(58, 111, 149, 0.06) 0%, rgba(58, 111, 149, 0) 50%);
+    background-attachment: fixed;
   }
 
   * {
@@ -27,7 +33,14 @@
   input:focus,
   textarea:focus,
   select:focus {
-    @apply outline-none ring-2 ring-accent/40;
+    @apply outline-none ring-2 ring-accent/40 border-accent/50;
+  }
+
+  /* A unified, accessible focus ring for interactive elements via keyboard */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    @apply outline-none ring-2 ring-accent/45 ring-offset-2 ring-offset-bg;
   }
 }
 
@@ -51,6 +64,31 @@
 
   .animate-slide-up {
     animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Standard elevated surface — the warm "paper card" used across the app */
+  .card-surface {
+    @apply rounded-card border border-border-light bg-card shadow-warm-sm;
+  }
+
+  /* Tactile press feedback for tappable elements */
+  .press {
+    @apply transition-transform duration-150 ease-spring active:scale-[0.97];
+  }
+
+  /* Hide content visually but keep it for screen readers */
+  .sr-only-mobile {
+    @apply sr-only;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 

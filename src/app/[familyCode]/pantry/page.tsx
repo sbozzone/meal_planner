@@ -8,6 +8,8 @@ import { useFamily } from "@/lib/family-context";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/types/database";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function PantryPage() {
   const { family } = useFamily();
@@ -50,20 +52,17 @@ export default function PantryPage() {
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-3">
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex min-h-touch flex-1 items-center justify-center gap-2 rounded-card bg-accent px-4 py-3 font-semibold text-white"
-          >
+          <Button variant="primary" size="lg" onClick={() => setShowForm(true)} className="flex-1">
             <Plus className="w-5 h-5" />
             Add Item
-          </button>
+          </Button>
           <button
             onClick={() => setExpiringOnly((prev) => !prev)}
             className={cn(
-              "min-h-touch rounded-card border px-4 py-3 text-sm font-medium",
+              "min-h-touch rounded-card border px-4 py-3 text-sm font-semibold transition-colors active:scale-[0.98]",
               expiringOnly
                 ? "border-gold bg-gold/10 text-gold"
-                : "border-border bg-card text-text-secondary"
+                : "border-border bg-card text-text-secondary hover:bg-card-header"
             )}
           >
             Expiring soon
@@ -77,9 +76,15 @@ export default function PantryPage() {
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="rounded-card border border-border-light bg-card px-4 py-10 text-center text-sm text-text-muted">
-            {expiringOnly ? "Nothing is expiring soon." : "Your pantry is empty for now."}
-          </div>
+          <EmptyState
+            emoji="🧺"
+            title={expiringOnly ? "Nothing expiring soon" : "Your pantry is empty"}
+            description={
+              expiringOnly
+                ? "Everything you have has plenty of time left."
+                : "Track what's on hand so shopping lists skip what you already own."
+            }
+          />
         ) : (
           <div className="space-y-4">
             {Object.entries(grouped).map(([category, categoryItems]) => {
@@ -139,7 +144,7 @@ function PantryRow({
   const soon = item.daysUntilExpiry !== null && (item.daysUntilExpiry ?? 999) <= 7;
 
   return (
-    <div className="rounded-card border border-border-light bg-card px-4 py-3">
+    <div className="card-surface px-4 py-3">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

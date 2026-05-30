@@ -180,7 +180,7 @@ export default function LandingPage() {
                 <div className="mt-4 space-y-3">
                   <button
                     onClick={() => setMode("create")}
-                    className="flex min-h-touch w-full items-center justify-between rounded-card bg-accent px-5 py-3 text-base font-semibold text-white transition-all active:scale-[0.98]"
+                    className="flex min-h-touch w-full items-center justify-between rounded-card bg-accent-gradient px-5 py-3 text-base font-semibold text-white shadow-accent-glow transition-all hover:brightness-[1.04] active:scale-[0.98]"
                   >
                     <span>Create a Family</span>
                     <ArrowRight className="h-5 w-5" />
@@ -241,7 +241,7 @@ export default function LandingPage() {
           <button
             onClick={handleCreate}
             disabled={!familyName.trim() || loading}
-            className="w-full px-6 py-4 bg-accent text-white rounded-card font-semibold text-lg hover:bg-accent-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-6 py-4 bg-accent-gradient text-white rounded-card font-semibold text-lg shadow-accent-glow hover:brightness-[1.04] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {loading ? "Creating..." : "Create Family"}
           </button>
@@ -288,7 +288,7 @@ export default function LandingPage() {
         <button
           onClick={handleJoin}
           disabled={!joinCode.trim() || loading}
-          className="w-full px-6 py-4 bg-accent text-white rounded-card font-semibold text-lg hover:bg-accent-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-6 py-4 bg-accent-gradient text-white rounded-card font-semibold text-lg shadow-accent-glow hover:brightness-[1.04] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {loading ? "Joining..." : "Join Family"}
         </button>

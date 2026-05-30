@@ -12,6 +12,8 @@ import { useFamily } from "@/lib/family-context";
 import { APPLIANCES, DISH_TAGS, type Dish } from "@/types/database";
 import { Plus, Search, Trash2, Pencil, Link, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function DishesPage() {
   const { family } = useFamily();
@@ -204,32 +206,35 @@ export default function DishesPage() {
         </div>
 
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="primary"
             onClick={() => {
               setEditingDish(null);
               setShowForm(true);
             }}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-accent text-white rounded-card font-semibold hover:bg-accent-hover active:scale-[0.98] transition-all min-h-touch"
+            className="flex-1"
           >
             <Plus className="w-5 h-5" />
             Add Dish
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => setShowImport(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            className="flex-1 text-accent"
             title="Import from URL"
           >
             <Link className="w-4 h-4 shrink-0" />
-            Import URL
-          </button>
-          <button
+            Import
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => setShowSuggest(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 border border-accent/30 text-accent rounded-card font-medium text-sm hover:bg-accent-light/30 active:scale-[0.98] transition-all min-h-touch"
+            className="flex-1 text-accent"
             title="AI dish suggestions"
           >
             <Wand2 className="w-4 h-4 shrink-0" />
             Suggest
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -239,19 +244,21 @@ export default function DishesPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-text-muted text-sm">
-              {search
-                ? "No dishes match your search"
-                : "No favorites yet. Add your first dish!"}
-            </p>
-          </div>
+          <EmptyState
+            emoji="🍳"
+            title={search ? "No matches" : "No favorites yet"}
+            description={
+              search
+                ? "Try a different search or clear your filters."
+                : "Save your family's go-to dinners here to plan the week in seconds."
+            }
+          />
         ) : (
           <div className="space-y-2">
             {filtered.map((dish) => (
               <div
                 key={dish.id}
-                className="flex items-center gap-3 px-4 py-3 bg-card border border-border-light rounded-card"
+                className="card-surface flex items-center gap-3 px-4 py-3 transition-shadow hover:shadow-warm"
               >
                 <button
                   onClick={() => handleEdit(dish)}
