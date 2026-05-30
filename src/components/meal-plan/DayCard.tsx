@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarClock, Plus, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { CalendarClock, ChefHat, Plus, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { cn, getMealEmoji } from "@/lib/utils";
+import { useDeviceId } from "@/hooks/useDeviceId";
 import { FUN_OPTIONS } from "@/types/database";
 import type { DayPlan, DinnerActivity, MealPlan } from "@/types/database";
 
@@ -10,6 +11,7 @@ const TODAY = new Date().toISOString().split("T")[0];
 
 export const DayCard = memo(function DayCard({
   day,
+  index = 0,
   onTapToAssign,
   onAddActivity,
   onEditActivity,
@@ -18,6 +20,7 @@ export const DayCard = memo(function DayCard({
   familyId,
 }: {
   day: DayPlan;
+  index?: number;
   onTapToAssign: (date: string) => void;
   onAddActivity: (date: string) => void;
   onEditActivity: (activity: DinnerActivity) => void;
@@ -34,169 +37,197 @@ export const DayCard = memo(function DayCard({
   const fullyEmpty = day.meals.length === 0 && activities.length === 0;
 
   return (
-    <div
+    <article
       className={cn(
-        "rounded-card border-l-4 border border-r border-t border-b transition-colors overflow-hidden",
+        "animate-rise relative overflow-hidden rounded-2xl transition-shadow",
         day.isToday
-          ? "border-l-accent border-accent/30 bg-accent-light/50"
+          ? "bg-today-gradient shadow-warm-md ring-2 ring-accent/35"
           : isPast
-          ? "border-l-border bg-card-header/70 border-border-light"
-          : isWeekend
-          ? "border-l-blue/40 bg-card border-border-light"
-          : "border-l-accent/40 bg-card border-border-light"
+          ? "border border-border-light/70 bg-card-header/40 shadow-warm-sm"
+          : "border border-border-light bg-card shadow-warm-sm hover:shadow-warm"
       )}
+      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
     >
-      {/* Day header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border-light/50">
-        <div className="flex items-center gap-2">
+      {/* Accent rail */}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-y-0 left-0 w-1.5",
+          day.isToday
+            ? "bg-accent-gradient"
+            : isPast
+            ? "bg-border"
+            : isWeekend
+            ? "bg-blue/45"
+            : "bg-accent/40"
+        )}
+      />
+
+      <div className="flex gap-3 py-3 pl-4 pr-3">
+        {/* Date column */}
+        <div className="flex w-11 shrink-0 flex-col items-center pt-0.5 text-center">
           <span
             className={cn(
-              "font-semibold text-base",
+              "text-[11px] font-bold uppercase tracking-wide",
+              day.isToday
+                ? "text-accent"
+                : isWeekend && !isPast
+                ? "text-blue"
+                : "text-text-muted"
+            )}
+          >
+            {day.shortName}
+          </span>
+          <span
+            className={cn(
+              "font-serif text-[26px] font-bold leading-none",
               day.isToday
                 ? "text-accent"
                 : isPast
                 ? "text-text-muted"
+                : isWeekend
+                ? "text-blue"
                 : "text-text"
-            )}
-          >
-            {day.dayName}
-          </span>
-          <span
-            className={cn(
-              "text-sm font-medium",
-              isPast ? "text-text-muted/70" : "text-text-muted"
             )}
           >
             {day.dayNumber}
           </span>
-          {isWeekend && !day.isToday && (
-            <span className="text-[10px] font-semibold text-blue/80 bg-blue/10 px-1.5 py-0.5 rounded-full">
-              {day.shortName}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {chef && (
-            <button
-              onClick={() => onSetChef(day.date)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-text-secondary bg-card-header border border-border px-2 py-0.5 rounded-full hover:border-accent/40 hover:text-accent transition-colors"
-            >
-              <span>👨‍🍳</span>
-              <span>{chef}</span>
-            </button>
-          )}
-          {!chef && (
-            <button
-              onClick={() => onSetChef(day.date)}
-              className="text-[11px] text-text-muted hover:text-accent transition-colors px-1"
-              aria-label="Set chef"
-            >
-              👨‍🍳
-            </button>
-          )}
           {day.isToday && (
-            <span className="text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="mt-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
               Today
             </span>
           )}
         </div>
-      </div>
 
-      <div className="p-3">
-        {/* Meals */}
-        {mainMeal && (
-          <MealChip meal={mainMeal} onRemove={onRemoveMeal} familyId={familyId} isMain />
-        )}
-        {sideMeals.length > 0 && (
-          <div className="mt-1.5 pl-2 space-y-1 border-l-2 border-border-light">
-            {sideMeals.map((meal) => (
-              <MealChip key={meal.id} meal={meal} onRemove={onRemoveMeal} familyId={familyId} />
-            ))}
+        {/* Content column */}
+        <div className="min-w-0 flex-1">
+          {/* Top meta row: full weekday + chef */}
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span
+              className={cn(
+                "font-serif text-[15px] font-semibold leading-none",
+                day.isToday ? "text-accent-dark" : isPast ? "text-text-muted" : "text-text"
+              )}
+            >
+              {day.dayName}
+            </span>
+            <ChefChip chef={chef} onClick={() => onSetChef(day.date)} />
           </div>
-        )}
 
-        {/* Activities */}
-        {activities.length > 0 && (
-          <div className="mt-3 space-y-1.5">
-            {activities.map((activity) => (
-              <button
-                key={activity.id}
-                className="flex w-full items-start gap-2 rounded-lg border border-blue/20 bg-blue/10 px-3 py-2 text-left text-sm text-text-secondary hover:bg-blue/15 transition-colors"
-                type="button"
-                onClick={() => onEditActivity(activity)}
-              >
-                <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-text">
-                    {activity.title}
-                  </span>
-                  <span className="block text-xs text-text-muted">
-                    {formatActivityTime(activity)}
-                    {activity.notes ? ` · ${activity.notes}` : ""}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Meals */}
+          {mainMeal && (
+            <MealChip meal={mainMeal} onRemove={onRemoveMeal} familyId={familyId} isMain />
+          )}
+          {sideMeals.length > 0 && (
+            <div className="mt-1.5 space-y-1.5">
+              {sideMeals.map((meal) => (
+                <MealChip key={meal.id} meal={meal} onRemove={onRemoveMeal} familyId={familyId} />
+              ))}
+            </div>
+          )}
 
-        {/* Action buttons */}
-        <div className={cn("mt-2 grid gap-2", fullyEmpty ? "grid-cols-1" : "grid-cols-2")}>
-          {/* Dinner button */}
+          {/* Activities */}
+          {activities.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {activities.map((activity) => (
+                <button
+                  key={activity.id}
+                  className="flex w-full items-start gap-2.5 rounded-xl border border-blue/20 bg-blue/8 px-3 py-2 text-left transition-colors hover:bg-blue/12"
+                  type="button"
+                  onClick={() => onEditActivity(activity)}
+                >
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue/15 text-blue">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-text">
+                      {activity.title}
+                    </span>
+                    <span className="block text-xs text-text-muted">
+                      {formatActivityTime(activity)}
+                      {activity.notes ? ` · ${activity.notes}` : ""}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Actions */}
           {fullyEmpty ? (
             <button
               onClick={() => onTapToAssign(day.date)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-xl transition-colors min-h-[72px]",
+                "group flex min-h-[68px] w-full flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed transition-all active:scale-[0.99]",
                 isPast
-                  ? "bg-card-header text-text-muted hover:text-text-secondary"
-                  : "bg-accent-light/60 text-accent-dark hover:bg-accent-light"
+                  ? "border-border bg-card-header/40 text-text-muted hover:text-text-secondary"
+                  : "border-accent/35 bg-accent-light/40 text-accent-dark hover:border-accent/55 hover:bg-accent-light/70"
               )}
             >
-              <span className="text-2xl leading-none">🍽️</span>
-              <span className="text-sm font-medium">
+              <span className="text-2xl leading-none transition-transform group-active:scale-90">🍽️</span>
+              <span className="text-sm font-semibold">
                 {isPast ? "Add dinner" : "What's cooking?"}
               </span>
               {!isPast && (
-                <span className="text-[11px] text-text-muted">Free night? Takeout?</span>
+                <span className="text-[11px] text-text-muted">Tap to plan · free night · takeout</span>
               )}
             </button>
           ) : (
-            <button
-              onClick={() => onTapToAssign(day.date)}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-card-header hover:bg-border text-text-secondary hover:text-accent transition-colors min-h-touch py-1 text-sm font-medium"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {day.meals.length === 0 ? "Add dinner" : "Add side"}
-            </button>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onTapToAssign(day.date)}
+                className="flex min-h-touch items-center justify-center gap-1.5 rounded-xl bg-card-header/80 py-1.5 text-sm font-semibold text-text-secondary transition-colors hover:bg-accent-light hover:text-accent active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+                {day.meals.length === 0 ? "Add dinner" : "Add side"}
+              </button>
+              <button
+                onClick={() => onAddActivity(day.date)}
+                className="flex min-h-touch items-center justify-center gap-1.5 rounded-xl bg-card-header/80 py-1.5 text-sm font-semibold text-text-secondary transition-colors hover:bg-blue/10 hover:text-blue active:scale-[0.98]"
+              >
+                <CalendarClock className="h-4 w-4" />
+                Activity
+              </button>
+            </div>
           )}
 
-          {/* Activity button */}
-          {!fullyEmpty && (
+          {fullyEmpty && (
             <button
               onClick={() => onAddActivity(day.date)}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-card-header hover:bg-blue/10 text-text-secondary hover:text-blue transition-colors min-h-touch py-1 text-sm font-medium"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 py-1 text-xs font-medium text-text-muted transition-colors hover:text-blue"
             >
               <CalendarClock className="h-3.5 w-3.5" />
-              Add activity
+              Add an activity instead
             </button>
           )}
         </div>
-
-        {/* Add activity link for fully-empty days */}
-        {fullyEmpty && (
-          <button
-            onClick={() => onAddActivity(day.date)}
-            className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-text-muted hover:text-blue transition-colors py-1.5"
-          >
-            <CalendarClock className="h-3.5 w-3.5" />
-            Add activity
-          </button>
-        )}
       </div>
-    </div>
+    </article>
   );
 });
+
+function ChefChip({ chef, onClick }: { chef: string | null; onClick: () => void }) {
+  if (chef) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex shrink-0 items-center gap-1 rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-[11px] font-semibold text-gold transition-colors hover:border-gold/50"
+      >
+        <ChefHat className="h-3 w-3" />
+        <span className="max-w-[5rem] truncate">{chef}</span>
+      </button>
+    );
+  }
+  return (
+    <button
+      onClick={onClick}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-gold/10 hover:text-gold"
+      aria-label="Assign a chef"
+    >
+      <ChefHat className="h-4 w-4" />
+    </button>
+  );
+}
 
 const MealChip = memo(function MealChip({
   meal,
@@ -212,13 +243,9 @@ const MealChip = memo(function MealChip({
   const name = meal.dish?.name || meal.custom_name || "Unknown dish";
   const funOption = FUN_OPTIONS.find((o) => o.label === name);
   const mealEmoji = funOption ? funOption.emoji : getMealEmoji(name);
-  const [deviceId, setDeviceId] = useState("");
+  const deviceId = useDeviceId();
   const [voteCount, setVoteCount] = useState(meal.vote_count || 0);
   const [userVote, setUserVote] = useState<1 | -1 | null>(null);
-
-  useEffect(() => {
-    setDeviceId(getDeviceId());
-  }, []);
 
   useEffect(() => {
     setVoteCount(meal.vote_count || 0);
@@ -260,41 +287,50 @@ const MealChip = memo(function MealChip({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-xl px-3 shadow-sm",
+        "flex items-center gap-2.5 rounded-xl",
         isMain
-          ? "bg-accent-light text-accent-dark py-3 border border-accent/20"
-          : "bg-card text-text-secondary border border-border-light py-2"
+          ? "border border-accent/20 bg-accent-light px-3 py-2.5 shadow-hairline"
+          : "border border-border-light bg-paper/70 px-3 py-2"
       )}
     >
-      {!isMain && (
-        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider shrink-0">
-          Side
-        </span>
-      )}
       <span
         className={cn(
-          "flex-1 flex items-center gap-1.5 min-w-0 font-semibold",
-          isMain ? "text-base text-accent-dark" : "text-sm text-text"
+          "flex shrink-0 items-center justify-center rounded-lg",
+          isMain ? "h-9 w-9 bg-white/70 text-xl" : "h-7 w-7 bg-card-header text-base"
         )}
       >
-        {mealEmoji && <span className="text-base leading-none shrink-0">{mealEmoji}</span>}
-        <span className="truncate">{name}</span>
+        {mealEmoji || "🍴"}
       </span>
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="min-w-0 flex-1">
+        {!isMain && (
+          <span className="block text-[9px] font-bold uppercase tracking-wider text-text-muted">
+            Side
+          </span>
+        )}
+        <span
+          className={cn(
+            "block truncate font-semibold",
+            isMain ? "text-[15px] text-accent-dark" : "text-sm text-text"
+          )}
+        >
+          {name}
+        </span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleVote(1);
           }}
           className={cn(
-            "min-h-touch min-w-[44px] rounded-lg px-2 flex items-center justify-center gap-1 text-xs font-semibold transition-colors",
+            "flex min-h-touch min-w-[42px] items-center justify-center gap-1 rounded-lg px-2 text-xs font-bold transition-colors active:scale-95",
             userVote === 1
-              ? "bg-accent text-white"
-              : "bg-white/60 text-accent-dark hover:bg-accent-light"
+              ? "bg-accent text-white shadow-warm-sm"
+              : "bg-white/70 text-accent-dark hover:bg-white"
           )}
           aria-label={`Upvote ${name}`}
         >
-          <ThumbsUp className="w-3.5 h-3.5" />
+          <ThumbsUp className="h-3.5 w-3.5" />
           {voteCount !== 0 && <span>{voteCount}</span>}
         </button>
         <button
@@ -303,42 +339,29 @@ const MealChip = memo(function MealChip({
             handleVote(-1);
           }}
           className={cn(
-            "min-h-touch min-w-[44px] rounded-lg px-2 flex items-center justify-center transition-colors",
+            "flex min-h-touch min-w-[42px] items-center justify-center rounded-lg px-2 transition-colors active:scale-95",
             userVote === -1
-              ? "bg-red text-white"
-              : "bg-white/60 text-text-secondary hover:bg-card-header"
+              ? "bg-red text-white shadow-warm-sm"
+              : "bg-white/70 text-text-secondary hover:bg-white"
           )}
           aria-label={`Downvote ${name}`}
         >
-          <ThumbsDown className="w-3.5 h-3.5" />
+          <ThumbsDown className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(meal.id);
+          }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-black/5 hover:text-red"
+          aria-label={`Remove ${name}`}
+        >
+          <X className="h-4 w-4" />
         </button>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(meal.id);
-        }}
-        className="p-1 rounded hover:bg-black/5 transition-all shrink-0"
-        aria-label={`Remove ${name}`}
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
     </div>
   );
 });
-
-function getDeviceId() {
-  if (typeof window === "undefined") return "server";
-  const key = "family-dinnertime-device-id";
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const next =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  window.localStorage.setItem(key, next);
-  return next;
-}
 
 function formatActivityTime(activity: DinnerActivity) {
   const start = formatTime(activity.start_time);

@@ -41,7 +41,7 @@ export default async function FamilyLayout({
 
   return (
     <FamilyProvider family={family}>
-      <div className="min-h-dvh bg-bg pb-24">
+      <div className="min-h-dvh pb-28">
         {children}
       </div>
       <BottomNav familyCode={familyCode} />

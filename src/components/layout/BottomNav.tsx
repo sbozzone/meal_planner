@@ -16,8 +16,8 @@ export function BottomNav({ familyCode }: { familyCode: string }) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border pb-safe z-50">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+    <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.6rem)]">
+      <div className="flex w-full max-w-sm items-center justify-around gap-1 rounded-2xl border border-border-light/80 bg-paper/90 p-1.5 shadow-nav backdrop-blur-md">
         {tabs.map((tab) => {
           const fullPath = `/${familyCode}${tab.href}`;
           const isActive =
@@ -29,26 +29,23 @@ export function BottomNav({ familyCode }: { familyCode: string }) {
             <Link
               key={tab.label}
               href={fullPath}
-              className="flex flex-col items-center justify-center gap-0.5 min-w-[64px] min-h-touch px-2 py-1"
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-xl py-2 transition-colors duration-200",
+                isActive ? "bg-accent-gradient shadow-accent-glow" : "hover:bg-card-header"
+              )}
             >
-              <span
+              <tab.icon
                 className={cn(
-                  "flex items-center justify-center w-10 h-7 rounded-full transition-colors",
-                  isActive ? "bg-accent/15" : ""
+                  "h-[22px] w-[22px] transition-colors",
+                  isActive ? "text-white" : "text-text-secondary group-hover:text-text"
                 )}
-              >
-                <tab.icon
-                  className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive ? "text-accent" : "text-text-secondary"
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-              </span>
+                strokeWidth={isActive ? 2.4 : 2}
+              />
               <span
                 className={cn(
-                  "text-xs font-medium transition-colors",
-                  isActive ? "text-accent" : "text-text-secondary"
+                  "text-[11px] font-semibold tracking-tight transition-colors",
+                  isActive ? "text-white" : "text-text-secondary group-hover:text-text"
                 )}
               >
                 {tab.label}

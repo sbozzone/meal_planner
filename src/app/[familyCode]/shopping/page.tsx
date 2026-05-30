@@ -7,6 +7,7 @@ import { useWeekNavigation } from "@/hooks/useWeekNavigation";
 import { useFamily } from "@/lib/family-context";
 import { Plus, Trash2, ShoppingCart, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function ShoppingPage() {
   const { family } = useFamily();
@@ -69,7 +70,7 @@ export default function ShoppingPage() {
           <button
             onClick={handleAdd}
             disabled={!newItem.trim()}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white rounded-lg font-medium text-sm hover:bg-accent-hover active:scale-[0.98] transition-all disabled:opacity-50 min-h-touch"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-accent-gradient text-white rounded-lg font-semibold text-sm shadow-accent-glow hover:brightness-[1.04] active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none min-h-touch"
           >
             <Plus className="w-4 h-4" />
             Add
@@ -107,12 +108,11 @@ export default function ShoppingPage() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-12">
-            <ShoppingCart className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-50" />
-            <p className="text-text-muted text-sm">
-              No items yet. Add ingredients as you plan meals!
-            </p>
-          </div>
+          <EmptyState
+            icon={<ShoppingCart className="h-6 w-6" />}
+            title="Your list is empty"
+            description="Add items by hand, or generate a list straight from this week's plan."
+          />
         ) : (
           <>
             {hasCategories && unchecked.length > 0 ? (
@@ -229,7 +229,7 @@ function ShoppingRow({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-card border border-border-light rounded-card">
+    <div className="card-surface flex items-center gap-3 px-4 py-3">
       <button
         onClick={() => onToggle(item.id, true)}
         className="w-6 h-6 rounded-full border-2 border-border hover:border-accent transition-colors shrink-0"

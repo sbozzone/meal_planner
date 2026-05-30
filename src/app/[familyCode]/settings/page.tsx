@@ -6,12 +6,13 @@ import { Header } from "@/components/layout/Header";
 import { Copy, Check, Share2, LogOut, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 export default function SettingsPage() {
   const { family } = useFamily();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const [members, setMembers] = useState<string[]>(family.members ?? []);
   const [newMember, setNewMember] = useState("");
   const [savingMembers, setSavingMembers] = useState(false);
@@ -48,16 +49,11 @@ export default function SettingsPage() {
     }
   }
 
-  function handleLeave() {
-    if (confirmLeave) {
-      localStorage.removeItem("familyCode");
-      document.cookie = "familyCode=; path=/; max-age=0";
-      router.push("/");
-    } else {
-      setConfirmLeave(true);
-      setTimeout(() => setConfirmLeave(false), 3000);
-    }
-  }
+  const leave = useConfirmAction(() => {
+    localStorage.removeItem("familyCode");
+    document.cookie = "familyCode=; path=/; max-age=0";
+    router.push("/");
+  });
 
   async function saveMembers(updated: string[]) {
     setSavingMembers(true);
@@ -103,7 +99,7 @@ export default function SettingsPage() {
 
       <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Share family */}
-        <div className="bg-card border border-border-light rounded-card p-5">
+        <div className="card-surface p-5">
           <h2 className="font-serif text-lg font-semibold text-text mb-1">
             {family.name}
           </h2>
@@ -137,17 +133,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleShare}
-            className="w-full mt-4 flex items-center justify-center gap-2 py-3 bg-accent text-white rounded-card font-semibold hover:bg-accent-hover active:scale-[0.98] transition-all"
-          >
+          <Button variant="primary" size="lg" fullWidth onClick={handleShare} className="mt-4">
             <Share2 className="w-4 h-4" />
             Share with Family
-          </button>
+          </Button>
         </div>
 
         {/* Family chefs */}
-        <div className="bg-card border border-border-light rounded-card p-5">
+        <div className="card-surface p-5">
           <h2 className="font-serif text-lg font-semibold text-text mb-1">
             👨‍🍳 Family Chefs
           </h2>
@@ -201,16 +194,16 @@ export default function SettingsPage() {
         </div>
 
         <button
-          onClick={handleLeave}
+          onClick={leave.trigger}
           className={cn(
-            "w-full flex items-center justify-center gap-2 py-3 rounded-card transition-colors min-h-touch",
-            confirmLeave
-              ? "text-white bg-red"
+            "w-full flex items-center justify-center gap-2 py-3 rounded-card transition-all min-h-touch active:scale-[0.98]",
+            leave.armed
+              ? "text-white bg-red shadow-warm-sm"
               : "text-red border border-red/20 hover:bg-red/5"
           )}
         >
           <LogOut className="w-4 h-4" />
-          {confirmLeave ? "Tap again to confirm" : "Leave Family"}
+          {leave.armed ? "Tap again to confirm" : "Leave Family"}
         </button>
       </div>
     </>

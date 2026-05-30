@@ -22,40 +22,35 @@ export function WeekNavigation({
   confirmClear?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2">
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onPrev}
-          className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
-          aria-label="Previous week"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+    <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5">
+      <div className="flex items-center gap-1.5">
+        <div className="flex items-center rounded-full border border-border-light bg-card/70 p-0.5 shadow-warm-sm">
+          <button
+            onClick={onPrev}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-card-header hover:text-accent active:scale-90"
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <span className="min-w-[7.5rem] select-none px-1 text-center font-serif text-[15px] font-semibold text-text">
+            {weekLabel}
+          </span>
+          <button
+            onClick={onNext}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-card-header hover:text-accent active:scale-90"
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
 
-        <button
-          type="button"
-          className="px-2 py-1.5 rounded-lg text-sm font-medium text-text cursor-default select-none"
-          tabIndex={-1}
-          aria-label="Current week range"
-        >
-          {weekLabel}
-        </button>
-
-        <button
-          onClick={onNext}
-          className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
-          aria-label="Next week"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-
-        <div className="ml-1 flex items-center rounded-full border border-border bg-card-header p-0.5">
+        <div className="flex items-center rounded-full border border-border-light bg-card/70 p-0.5 shadow-warm-sm">
           <button
             onClick={() => mode !== "7-day" && onToggleMode()}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              "rounded-full px-2.5 py-1.5 text-xs font-bold transition-all",
               mode === "7-day"
-                ? "bg-accent text-white"
+                ? "bg-accent-gradient text-white shadow-warm-sm"
                 : "text-text-muted hover:text-text"
             )}
           >
@@ -64,9 +59,9 @@ export function WeekNavigation({
           <button
             onClick={() => mode !== "mon-sun" && onToggleMode()}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+              "rounded-full px-2.5 py-1.5 text-xs font-bold transition-all",
               mode === "mon-sun"
-                ? "bg-accent text-white"
+                ? "bg-accent-gradient text-white shadow-warm-sm"
                 : "text-text-muted hover:text-text"
             )}
           >
@@ -78,13 +73,13 @@ export function WeekNavigation({
       <button
         onClick={onClearWeek}
         className={cn(
-          "flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors min-h-touch",
+          "flex min-h-touch items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-all active:scale-95",
           confirmClear
-            ? "text-white bg-red"
-            : "text-text-muted hover:text-red hover:bg-red/5"
+            ? "bg-red text-white shadow-warm-sm"
+            : "text-text-muted hover:bg-red/8 hover:text-red"
         )}
       >
-        <RotateCcw className="w-4 h-4" />
+        <RotateCcw className="h-4 w-4" />
         <span>{confirmClear ? "Confirm" : "Clear"}</span>
       </button>
     </div>

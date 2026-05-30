@@ -3,6 +3,7 @@
 import { useFamily } from "@/lib/family-context";
 import { LayoutList, Printer, Settings } from "lucide-react";
 import Link from "next/link";
+import { IconButton } from "@/components/ui/IconButton";
 
 export function Header({
   title,
@@ -20,41 +21,40 @@ export function Header({
   const { family } = useFamily();
 
   return (
-    <header className="sticky top-0 z-40 bg-bg/95 backdrop-blur-sm border-b border-border-light pt-safe">
-      <div className="flex items-center justify-between px-4 py-3 max-w-3xl mx-auto">
-        <Link href="/?splash=1" className="group">
-          <h1 className="font-serif text-xl font-bold text-accent group-active:opacity-70 transition-opacity">
-            🧑‍🍳 {title || family.name}
-          </h1>
-          {subtitle && (
-            <p className="text-sm text-text-secondary">{subtitle}</p>
-          )}
+    <header className="sticky top-0 z-40 border-b border-border-light/70 bg-bg/80 pt-safe backdrop-blur-md">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-2.5">
+        <Link href="/?splash=1" className="group flex min-w-0 items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-gradient text-lg shadow-accent-glow transition-transform group-active:scale-95">
+            🧑‍🍳
+          </span>
+          <span className="min-w-0">
+            <h1 className="truncate font-serif text-lg font-bold leading-tight text-text">
+              {title || family.name}
+            </h1>
+            {subtitle && (
+              <p className="truncate text-xs font-medium text-text-secondary">
+                {subtitle}
+              </p>
+            )}
+          </span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {showPrint && (
-            <button
-              onClick={() => window.print()}
-              className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
-              aria-label="Print"
-            >
-              <Printer className="w-5 h-5" />
-            </button>
+            <IconButton onClick={() => window.print()} aria-label="Print">
+              <Printer className="h-5 w-5" />
+            </IconButton>
           )}
           {onTemplatesClick && (
-            <button
-              onClick={onTemplatesClick}
-              className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
-              aria-label="Meal templates"
-            >
-              <LayoutList className="w-5 h-5" />
-            </button>
+            <IconButton onClick={onTemplatesClick} aria-label="Meal templates">
+              <LayoutList className="h-5 w-5" />
+            </IconButton>
           )}
           <Link
             href={`/${familyCode}/settings`}
-            className="p-2 rounded-lg text-text-secondary hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
             aria-label="Settings"
+            className="flex min-h-touch min-w-[44px] items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-card-header hover:text-text active:scale-95"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="h-5 w-5" />
           </Link>
         </div>
       </div>
