@@ -15,6 +15,8 @@ export type WizardDay = {
   isEmpty: boolean;
 };
 
+type Protein = WizardResult["proteins"][number];
+type Suggestions = Pick<WizardResult, "favoriteSuggestions" | "newIdeas">;
 type Suggestion = { name: string; reason: string; badge?: string; kind: "favorite" | "idea" };
 
 type Props = {
@@ -40,25 +42,43 @@ export function PlanningWizard({
   onAssignCustom,
   onSaveToLibrary,
 }: Props) {
-  const [result, setResult] = useState<WizardResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Phase 1: fast pantry fetch (~200 ms)
+  const [proteins, setProteins] = useState<Protein[]>([]);
+  const [loadingProteins, setLoadingProteins] = useState(false);
+
+  // Phase 2: AI suggestions (~3-5 s)
+  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [pantryOpen, setPantryOpen] = useState(false);
 
   // Interaction state
-  const [planned, setPlanned] = useState<Record<string, string>>({}); // name -> dayShortName
+  const [planned, setPlanned] = useState<Record<string, string>>({});
   const [plannedDates, setPlannedDates] = useState<Set<string>>(new Set());
   const [openPicker, setOpenPicker] = useState<string | null>(null);
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const [autoFilling, setAutoFilling] = useState(false);
-  const [justFilled, setJustFilled] = useState<string | null>(null); // date with a "pop" highlight
+  const [justFilled, setJustFilled] = useState<string | null>(null);
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
   const dragOffset = useRef(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadProteins = useCallback(async () => {
+    setLoadingProteins(true);
+    try {
+      const res = await fetch("/api/pantry/proteins", {
+        headers: { "x-family-id": familyId },
+      });
+      if (res.ok) setProteins(await res.json());
+    } finally {
+      setLoadingProteins(false);
+    }
+  }, [familyId]);
+
+  const loadSuggestions = useCallback(async () => {
+    setLoadingSuggestions(true);
     setError(null);
     try {
       const res = await fetch("/api/ai/plan-wizard", {
@@ -70,18 +90,23 @@ export function PlanningWizard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Something went wrong");
       }
-      setResult(await res.json());
+      const data: WizardResult = await res.json();
+      setSuggestions({ favoriteSuggestions: data.favoriteSuggestions, newIdeas: data.newIdeas });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load suggestions");
     } finally {
-      setLoading(false);
+      setLoadingSuggestions(false);
     }
   }, [familyId]);
 
   useEffect(() => {
-    if (open && !result && !loading) load();
-    if (!open) {
-      setResult(null);
+    if (open) {
+      // Fire both fetches concurrently — proteins will arrive first
+      loadProteins();
+      loadSuggestions();
+    } else {
+      setProteins([]);
+      setSuggestions(null);
       setError(null);
       setPantryOpen(false);
       setPlanned({});
@@ -89,25 +114,24 @@ export function PlanningWizard({
       setOpenPicker(null);
       setSaved(new Set());
     }
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // A day is open for auto-fill if the plan shows it empty and we haven't just filled it
   const availableDays = days.filter((d) => d.isEmpty && !plannedDates.has(d.date));
 
-  const allSuggestions: Suggestion[] = result
+  const allSuggestions: Suggestion[] = suggestions
     ? [
-        ...result.favoriteSuggestions.map((s) => ({
+        ...suggestions.favoriteSuggestions.map((s) => ({
           name: s.name,
           reason: s.reason,
           badge: s.matchingPantryItem ?? undefined,
           kind: "favorite" as const,
         })),
-        ...result.newIdeas.map((s) => ({
+        ...suggestions.newIdeas.map((s) => ({
           name: s.name,
           reason: s.reason,
           badge: s.protein,
@@ -138,7 +162,6 @@ export function PlanningWizard({
     if (autoFilling) return;
     setAutoFilling(true);
     setOpenPicker(null);
-    // Snapshot targets/picks up front so sequential assigns don't fight prop updates
     const targets = days.filter((d) => d.isEmpty && !plannedDates.has(d.date));
     const picks = allSuggestions.filter((s) => !planned[s.name]);
     const usedDates = new Set(plannedDates);
@@ -150,7 +173,7 @@ export function PlanningWizard({
       usedDates.add(day.date);
       ti++;
       await planSuggestion(s, day);
-      await delay(220); // staggered, satisfying fill
+      await delay(220);
     }
     setAutoFilling(false);
   }
@@ -210,9 +233,9 @@ export function PlanningWizard({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {result && !loading && (
+            {(suggestions || error) && !loadingSuggestions && (
               <button
-                onClick={load}
+                onClick={() => { loadProteins(); loadSuggestions(); }}
                 className="flex h-10 w-10 items-center justify-center rounded-xl text-text-muted transition-colors hover:bg-card-header hover:text-accent"
                 aria-label="Refresh suggestions"
               >
@@ -230,13 +253,101 @@ export function PlanningWizard({
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] space-y-5">
-          {loading && <LoadingSkeleton />}
 
-          {error && (
+          {/* ── Week strip — rendered immediately from props, no API needed ── */}
+          <WeekStrip days={days} plannedDates={plannedDates} justFilled={justFilled} />
+
+          {/* ── Auto-fill button — always visible, enabled once suggestions arrive ── */}
+          <button
+            onClick={handleAutoFill}
+            disabled={autoFillCount === 0 || autoFilling || loadingSuggestions}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 font-semibold transition-all active:scale-[0.98]",
+              autoFillCount === 0 || autoFilling || loadingSuggestions
+                ? "bg-card-header text-text-muted"
+                : "bg-accent-gradient text-white shadow-accent-glow hover:brightness-[1.04]"
+            )}
+          >
+            <Wand2 className={cn("h-5 w-5", (autoFilling || loadingSuggestions) && "animate-pulse")} />
+            {autoFilling
+              ? "Filling your week…"
+              : loadingSuggestions
+              ? "Asking the AI chef…"
+              : autoFillCount === 0
+              ? availableDays.length === 0
+                ? "Every night is planned 🎉"
+                : "Add more picks to auto-fill"
+              : `Auto-fill ${autoFillCount} empty night${autoFillCount !== 1 ? "s" : ""}`}
+          </button>
+
+          {/* ── Phase 1: Proteins on hand (fast DB query, ~200 ms) ── */}
+          {loadingProteins ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-4 w-32 rounded-full bg-card-header" />
+              <div className="flex gap-2">
+                <div className="h-8 w-28 rounded-full bg-card-header" />
+                <div className="h-8 w-24 rounded-full bg-card-header" />
+                <div className="h-8 w-20 rounded-full bg-card-header" />
+              </div>
+            </div>
+          ) : proteins.length > 0 ? (
+            <section>
+              <SectionLabel icon="🥩" label="Proteins on hand" />
+              <div className="mt-2 flex flex-wrap gap-2">
+                {proteins.map((p) => (
+                  <span
+                    key={p.name}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent-light px-3 py-1.5 text-sm font-semibold text-accent-dark"
+                  >
+                    {p.name}
+                    <span className="text-xs font-normal text-text-muted">
+                      {p.quantity} {p.unit}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Pantry snapshot collapsible — show as soon as proteins loaded */}
+          {!loadingProteins && (
+            <section>
+              <button
+                onClick={() => setPantryOpen((v) => !v)}
+                className="flex w-full items-center gap-2 rounded-xl border border-border-light bg-card-header/50 px-4 py-3 text-left transition-colors hover:bg-card-header"
+              >
+                {pantryOpen ? (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />
+                )}
+                <span className="text-sm font-semibold text-text">Full pantry snapshot</span>
+                {!pantryOpen && (
+                  <span className="ml-auto text-xs text-text-muted">
+                    {proteins.length === 0
+                      ? "Nothing logged yet"
+                      : `${proteins.length} protein${proteins.length !== 1 ? "s" : ""} found`}
+                  </span>
+                )}
+              </button>
+              {pantryOpen && (
+                <p className="mt-2 rounded-xl bg-card-header/40 px-4 py-3 text-sm text-text-secondary">
+                  {proteins.length === 0
+                    ? "Your pantry is empty — add items on the Pantry tab so the wizard can use them."
+                    : proteins.map((p) => `${p.name} (${p.quantity} ${p.unit})`).join(" · ")}
+                </p>
+              )}
+            </section>
+          )}
+
+          {/* ── Phase 2: AI suggestions (slow, ~3-5 s) ── */}
+          {loadingSuggestions && <SuggestionsSkeleton />}
+
+          {error && !loadingSuggestions && (
             <div className="rounded-2xl border border-red/20 bg-red/5 p-4 text-center">
               <p className="text-sm font-medium text-red">{error}</p>
               <button
-                onClick={load}
+                onClick={loadSuggestions}
                 className="mt-3 text-sm font-semibold text-accent underline-offset-2 hover:underline"
               >
                 Try again
@@ -244,87 +355,13 @@ export function PlanningWizard({
             </div>
           )}
 
-          {result && !loading && (
+          {suggestions && !loadingSuggestions && (
             <>
-              {/* Week strip — live view of the days being filled */}
-              <WeekStrip days={days} plannedDates={plannedDates} justFilled={justFilled} />
-
-              {/* Hero auto-fill */}
-              <button
-                onClick={handleAutoFill}
-                disabled={autoFillCount === 0 || autoFilling}
-                className={cn(
-                  "flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 font-semibold transition-all active:scale-[0.98]",
-                  autoFillCount === 0 || autoFilling
-                    ? "bg-card-header text-text-muted"
-                    : "bg-accent-gradient text-white shadow-accent-glow hover:brightness-[1.04]"
-                )}
-              >
-                <Wand2 className={cn("h-5 w-5", autoFilling && "animate-pulse")} />
-                {autoFilling
-                  ? "Filling your week…"
-                  : autoFillCount === 0
-                  ? availableDays.length === 0
-                    ? "Every night is planned 🎉"
-                    : "Add more picks to auto-fill"
-                  : `Auto-fill ${autoFillCount} empty night${autoFillCount !== 1 ? "s" : ""}`}
-              </button>
-
-              {/* Proteins on hand */}
-              {result.proteins.length > 0 && (
-                <section>
-                  <SectionLabel icon="🥩" label="Proteins on hand" />
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {result.proteins.map((p) => (
-                      <span
-                        key={p.name}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent-light px-3 py-1.5 text-sm font-semibold text-accent-dark"
-                      >
-                        {p.name}
-                        <span className="text-xs font-normal text-text-muted">
-                          {p.quantity} {p.unit}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Pantry snapshot */}
-              <section>
-                <button
-                  onClick={() => setPantryOpen((v) => !v)}
-                  className="flex w-full items-center gap-2 rounded-xl border border-border-light bg-card-header/50 px-4 py-3 text-left transition-colors hover:bg-card-header"
-                >
-                  {pantryOpen ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />
-                  )}
-                  <span className="text-sm font-semibold text-text">Full pantry snapshot</span>
-                  {!pantryOpen && (
-                    <span className="ml-auto text-xs text-text-muted">
-                      {result.proteins.length === 0
-                        ? "Nothing logged yet"
-                        : `${result.proteins.length} protein${result.proteins.length !== 1 ? "s" : ""} found`}
-                    </span>
-                  )}
-                </button>
-                {pantryOpen && (
-                  <p className="mt-2 rounded-xl bg-card-header/40 px-4 py-3 text-sm text-text-secondary">
-                    {result.proteins.length === 0
-                      ? "Your pantry is empty — add items on the Pantry tab so the wizard can use them."
-                      : result.proteins.map((p) => `${p.name} (${p.quantity} ${p.unit})`).join(" · ")}
-                  </p>
-                )}
-              </section>
-
-              {/* From favorites */}
-              {result.favoriteSuggestions.length > 0 && (
+              {suggestions.favoriteSuggestions.length > 0 && (
                 <section>
                   <SectionLabel icon="⭐" label="From your favorites" />
                   <div className="mt-2 space-y-2">
-                    {result.favoriteSuggestions.map((s) => (
+                    {suggestions.favoriteSuggestions.map((s) => (
                       <SuggestionCard
                         key={s.name}
                         name={s.name}
@@ -338,19 +375,20 @@ export function PlanningWizard({
                         onTogglePicker={() =>
                           setOpenPicker((cur) => (cur === s.name ? null : s.name))
                         }
-                        onPick={(day) => handlePick({ name: s.name, reason: s.reason, kind: "favorite" }, day)}
+                        onPick={(day) =>
+                          handlePick({ name: s.name, reason: s.reason, kind: "favorite" }, day)
+                        }
                       />
                     ))}
                   </div>
                 </section>
               )}
 
-              {/* New ideas */}
-              {result.newIdeas.length > 0 && (
+              {suggestions.newIdeas.length > 0 && (
                 <section>
                   <SectionLabel icon="💡" label="New ideas from your pantry" />
                   <div className="mt-2 space-y-2">
-                    {result.newIdeas.map((s) => (
+                    {suggestions.newIdeas.map((s) => (
                       <SuggestionCard
                         key={s.name}
                         name={s.name}
@@ -366,7 +404,9 @@ export function PlanningWizard({
                         onTogglePicker={() =>
                           setOpenPicker((cur) => (cur === s.name ? null : s.name))
                         }
-                        onPick={(day) => handlePick({ name: s.name, reason: s.reason, kind: "idea" }, day)}
+                        onPick={(day) =>
+                          handlePick({ name: s.name, reason: s.reason, kind: "idea" }, day)
+                        }
                       />
                     ))}
                   </div>
@@ -548,22 +588,9 @@ function SuggestionCard({
   );
 }
 
-function LoadingSkeleton() {
+function SuggestionsSkeleton() {
   return (
     <div className="space-y-5 animate-pulse">
-      <div className="flex justify-between gap-1">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="h-12 flex-1 rounded-lg bg-card-header" />
-        ))}
-      </div>
-      <div className="h-12 rounded-2xl bg-card-header/80" />
-      <div className="space-y-2">
-        <div className="h-4 w-32 rounded-full bg-card-header" />
-        <div className="flex gap-2">
-          <div className="h-8 w-24 rounded-full bg-card-header" />
-          <div className="h-8 w-20 rounded-full bg-card-header" />
-        </div>
-      </div>
       {[1, 2].map((g) => (
         <div key={g} className="space-y-2">
           <div className="h-4 w-44 rounded-full bg-card-header" />
@@ -572,7 +599,7 @@ function LoadingSkeleton() {
           ))}
         </div>
       ))}
-      <p className="text-center text-sm text-text-muted">Reading your pantry &amp; history…</p>
+      <p className="text-center text-sm text-text-muted animate-none">Asking the AI chef…</p>
     </div>
   );
 }
