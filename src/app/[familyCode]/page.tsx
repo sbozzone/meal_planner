@@ -230,7 +230,19 @@ export default function MealPlanPage() {
       <PlanningWizard
         open={showWizard}
         familyId={family.id}
+        days={daysWithAll.map((d) => ({
+          date: d.date,
+          shortName: d.shortName,
+          dayName: d.dayName,
+          dayNumber: d.dayNumber,
+          isToday: d.isToday,
+          isEmpty: d.meals.length === 0,
+        }))}
+        dishes={dishes}
         onClose={() => setShowWizard(false)}
+        onAssignDish={assignDish}
+        onAssignCustom={assignCustomMeal}
+        onSaveToLibrary={(name) => addDish(name, [], [])}
       />
 
       <ChefPickerSheet
