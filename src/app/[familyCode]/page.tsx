@@ -10,6 +10,7 @@ import { ChefPickerSheet } from "@/components/meal-plan/ChefPickerSheet";
 import { DishForm } from "@/components/dishes/DishForm";
 import { PrintSheet } from "@/components/print/PrintSheet";
 import { TemplatesModal } from "@/components/templates/TemplatesModal";
+import { PlanningWizard } from "@/components/meal-plan/PlanningWizard";
 import { useWeekNavigation } from "@/hooks/useWeekNavigation";
 import { useMealPlan } from "@/hooks/useMealPlan";
 import { useDinnerActivities } from "@/hooks/useDinnerActivities";
@@ -46,6 +47,7 @@ export default function MealPlanPage() {
   const [pendingDate, setPendingDate] = useState<string | null>(null);
   const [showAddDish, setShowAddDish] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const clearConfirm = useConfirmAction(clearWeek);
 
   const daysWithAll = useMemo(
@@ -99,6 +101,7 @@ export default function MealPlanPage() {
         showPrint
         familyCode={family.share_code}
         onTemplatesClick={() => setShowTemplates(true)}
+        onWizardClick={() => setShowWizard(true)}
       />
 
       <WeekNavigation
@@ -222,6 +225,24 @@ export default function MealPlanPage() {
           }
         }}
         onDelete={deleteActivity}
+      />
+
+      <PlanningWizard
+        open={showWizard}
+        familyId={family.id}
+        days={daysWithAll.map((d) => ({
+          date: d.date,
+          shortName: d.shortName,
+          dayName: d.dayName,
+          dayNumber: d.dayNumber,
+          isToday: d.isToday,
+          isEmpty: d.meals.length === 0,
+        }))}
+        dishes={dishes}
+        onClose={() => setShowWizard(false)}
+        onAssignDish={assignDish}
+        onAssignCustom={assignCustomMeal}
+        onSaveToLibrary={(name) => addDish(name, [], [])}
       />
 
       <ChefPickerSheet

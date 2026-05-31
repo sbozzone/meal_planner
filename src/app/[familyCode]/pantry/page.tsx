@@ -6,7 +6,7 @@ import { PantryForm } from "@/components/pantry/PantryForm";
 import { usePantry } from "@/hooks/usePantry";
 import { useFamily } from "@/lib/family-context";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/types/database";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -15,6 +15,7 @@ export default function PantryPage() {
   const { family } = useFamily();
   const { items, loading, addItem, updateItem, deleteItem } = usePantry();
   const [showForm, setShowForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<PantryItem | null>(null);
   const [expiringOnly, setExpiringOnly] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -52,7 +53,7 @@ export default function PantryPage() {
 
       <main className="mx-auto max-w-3xl space-y-4 px-4 py-3">
         <div className="flex gap-2">
-          <Button variant="primary" size="lg" onClick={() => setShowForm(true)} className="flex-1">
+          <Button variant="primary" size="lg" onClick={() => { setEditingItem(null); setShowForm(true); }} className="flex-1">
             <Plus className="w-5 h-5" />
             Add Item
           </Button>
@@ -107,6 +108,7 @@ export default function PantryPage() {
                         <PantryRow
                           key={item.id}
                           item={item}
+                          onEdit={() => { setEditingItem(item); setShowForm(true); }}
                           onConsume={() => updateItem(item.id, { consumed: 1 })}
                           onDelete={() => deleteItem(item.id)}
                         />
@@ -122,9 +124,14 @@ export default function PantryPage() {
 
       <PantryForm
         open={showForm}
-        onClose={() => setShowForm(false)}
-        onSave={async (item) => {
-          await addItem(item);
+        initialItem={editingItem}
+        onClose={() => { setShowForm(false); setEditingItem(null); }}
+        onSave={async (input) => {
+          if (editingItem) {
+            await updateItem(editingItem.id, input);
+          } else {
+            await addItem(input);
+          }
         }}
       />
     </>
@@ -133,10 +140,12 @@ export default function PantryPage() {
 
 function PantryRow({
   item,
+  onEdit,
   onConsume,
   onDelete,
 }: {
   item: PantryItem;
+  onEdit: () => void;
   onConsume: () => void;
   onDelete: () => void;
 }) {
@@ -167,6 +176,13 @@ function PantryRow({
           )}
           {item.notes && <p className="mt-1 text-xs text-text-muted">{item.notes}</p>}
         </div>
+        <button
+          onClick={onEdit}
+          className="flex min-h-touch min-w-[44px] items-center justify-center rounded-lg text-text-muted hover:bg-card-header hover:text-accent transition-colors"
+          aria-label={`Edit ${item.name}`}
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
         <button
           onClick={onConsume}
           className="flex min-h-touch min-w-[44px] items-center justify-center rounded-lg bg-green/10 text-green"

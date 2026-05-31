@@ -1,7 +1,7 @@
 "use client";
 
 import { useFamily } from "@/lib/family-context";
-import { LayoutList, Printer, Settings } from "lucide-react";
+import { LayoutList, Printer, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -11,12 +11,14 @@ export function Header({
   showPrint,
   familyCode,
   onTemplatesClick,
+  onWizardClick,
 }: {
   title?: string;
   subtitle?: string;
   showPrint?: boolean;
   familyCode: string;
   onTemplatesClick?: () => void;
+  onWizardClick?: () => void;
 }) {
   const { family } = useFamily();
 
@@ -42,6 +44,11 @@ export function Header({
           {showPrint && (
             <IconButton onClick={() => window.print()} aria-label="Print">
               <Printer className="h-5 w-5" />
+            </IconButton>
+          )}
+          {onWizardClick && (
+            <IconButton onClick={onWizardClick} aria-label="Planning wizard">
+              <Sparkles className="h-5 w-5" />
             </IconButton>
           )}
           {onTemplatesClick && (
