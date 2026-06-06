@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,8 @@ export function BottomSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
+  // Space taken up by the on-screen keyboard, so we can lift the sheet above it.
+  const [keyboardInset, setKeyboardInset] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -29,6 +31,27 @@ export function BottomSheet({
     }
     return () => {
       document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  // Keep the sheet anchored above the on-screen keyboard. Without this, the
+  // sheet stays pinned to the bottom of the *layout* viewport (behind the
+  // keyboard) when an input is focused, pushing its top fields off-screen.
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const inset = window.innerHeight - vv.height - vv.offsetTop;
+      setKeyboardInset(inset > 0 ? inset : 0);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      setKeyboardInset(0);
     };
   }, [open]);
 
@@ -72,6 +95,14 @@ export function BottomSheet({
           "absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[85dvh] flex flex-col animate-slide-up transition-transform",
           className
         )}
+        style={
+          keyboardInset > 0
+            ? {
+                bottom: keyboardInset,
+                maxHeight: `calc(85dvh - ${keyboardInset}px)`,
+              }
+            : undefined
+        }
       >
         <div
           className="flex flex-col items-center pt-2 pb-0 shrink-0 cursor-grab active:cursor-grabbing touch-none"

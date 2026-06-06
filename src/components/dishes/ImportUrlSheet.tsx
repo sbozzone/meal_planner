@@ -48,6 +48,9 @@ export function ImportUrlSheet({
     if (!url.trim()) return;
     setStep("loading");
     setError(null);
+    // Guard against a request that never resolves so the spinner can't hang forever.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
     try {
       const res = await fetch("/api/ai/import-url", {
         method: "POST",
@@ -56,6 +59,7 @@ export function ImportUrlSheet({
           "x-family-id": family.id,
         },
         body: JSON.stringify({ url: url.trim() }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -66,9 +70,15 @@ export function ImportUrlSheet({
       setRecipe(data);
       setEditedName(data.name);
       setStep("review");
-    } catch {
-      setError("Network error — please try again");
+    } catch (err) {
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "That took too long — try again or use a different URL"
+          : "Network error — please try again"
+      );
       setStep("input");
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
