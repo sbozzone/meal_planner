@@ -3,6 +3,10 @@ import { generateObject } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
+// Allow enough time for the page fetch + AI extraction without the platform
+// killing the request mid-flight (default can be as low as 10s).
+export const maxDuration = 60;
+
 const RecipeSchema = z.object({
   name: z.string().describe("Recipe name"),
   tags: z
@@ -93,6 +97,7 @@ export async function POST(request: NextRequest) {
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
       schema: RecipeSchema,
+      abortSignal: AbortSignal.timeout(35000),
       prompt: `Extract the recipe from this webpage text. Return structured data suitable for a family recipe app.
 
 URL: ${url}
@@ -106,9 +111,16 @@ Extract all ingredients with quantities, units, and grocery store category. If p
     return NextResponse.json(object);
   } catch (err) {
     console.error("AI import-url error:", err);
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "TimeoutError" || err.name === "AbortError");
     return NextResponse.json(
-      { error: "Failed to extract recipe from that page" },
-      { status: 500 }
+      {
+        error: isTimeout
+          ? "Reading the recipe took too long — please try again"
+          : "Failed to extract recipe from that page",
+      },
+      { status: isTimeout ? 504 : 500 }
     );
   }
 }
