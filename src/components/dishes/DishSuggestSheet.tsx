@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
-import { DISH_TAGS } from "@/types/database";
-import { Plus, RefreshCw, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { DISH_TAGS, type Dish } from "@/types/database";
+import { Plus, RefreshCw, CheckCircle2, ExternalLink } from "lucide-react";
+import { cn, recipeSearchUrl } from "@/lib/utils";
 
 interface Suggestion {
   name: string;
@@ -15,11 +15,13 @@ interface Suggestion {
 export function DishSuggestSheet({
   open,
   familyId,
+  dishes,
   onClose,
   onAdd,
 }: {
   open: boolean;
   familyId: string;
+  dishes: Dish[];
   onClose: () => void;
   onAdd: (name: string, tags: string[]) => Promise<void>;
 }) {
@@ -97,6 +99,13 @@ export function DishSuggestSheet({
               {suggestions.map((s) => {
                 const isAdded = added.has(s.name);
                 const isAdding = adding === s.name;
+                // Prefer a saved recipe link from the matching library dish;
+                // otherwise fall back to a web search for the dish name.
+                const libraryMatch = dishes.find(
+                  (d) => d.name.toLowerCase() === s.name.toLowerCase()
+                );
+                const recipeUrl = libraryMatch?.source_url || recipeSearchUrl(s.name);
+                const hasSavedRecipe = Boolean(libraryMatch?.source_url);
                 return (
                   <div
                     key={s.name}
@@ -124,6 +133,15 @@ export function DishSuggestSheet({
                           })}
                         </div>
                       )}
+                      <a
+                        href={recipeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {hasSavedRecipe ? "View recipe" : "Find recipe"}
+                      </a>
                     </div>
                     <button
                       onClick={() => handleAdd(s)}

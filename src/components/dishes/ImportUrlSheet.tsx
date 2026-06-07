@@ -14,6 +14,7 @@ interface ExtractedRecipe {
   prep_time: number | null;
   cook_time: number | null;
   servings: number;
+  source_url: string;
 }
 
 type Step = "input" | "loading" | "review";
@@ -25,7 +26,12 @@ export function ImportUrlSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, tags: string[], ingredients: Ingredient[]) => Promise<void>;
+  onSave: (
+    name: string,
+    tags: string[],
+    ingredients: Ingredient[],
+    sourceUrl: string | null
+  ) => Promise<void>;
 }) {
   const { family } = useFamily();
   const [step, setStep] = useState<Step>("input");
@@ -85,7 +91,7 @@ export function ImportUrlSheet({
   async function handleSave() {
     if (!recipe || !editedName.trim()) return;
     setSaving(true);
-    await onSave(editedName.trim(), recipe.tags, recipe.ingredients);
+    await onSave(editedName.trim(), recipe.tags, recipe.ingredients, recipe.source_url || null);
     setSaving(false);
     onClose();
     reset();

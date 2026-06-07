@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Sparkles, Loader2, ChevronLeft } from "lucide-react";
+import { Search, Plus, Sparkles, Loader2, ChevronLeft, ExternalLink } from "lucide-react";
 import { BottomSheet } from "@/components/shared/BottomSheet";
 import { DISH_TAGS, FUN_OPTIONS, type Dish } from "@/types/database";
 import { useFamily } from "@/lib/family-context";
-import { cn } from "@/lib/utils";
+import { cn, recipeSearchUrl } from "@/lib/utils";
 
 interface Suggestion {
   name: string;
@@ -152,9 +152,12 @@ export function DishPicker({
           {!suggesting && !suggestError && suggestions.length > 0 && (
             <div className="space-y-3">
               {suggestions.map((s, i) => {
-                const inLibrary = dishes.some(
+                const libraryMatch = dishes.find(
                   (d) => d.name.toLowerCase() === s.name.toLowerCase()
                 );
+                const inLibrary = Boolean(libraryMatch);
+                const recipeUrl = libraryMatch?.source_url || recipeSearchUrl(s.name);
+                const hasSavedRecipe = Boolean(libraryMatch?.source_url);
                 const isAdding = addingName === s.name;
                 return (
                   <div
@@ -167,6 +170,15 @@ export function DishPicker({
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
                           {s.reason}
                         </p>
+                        <a
+                          href={recipeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {hasSavedRecipe ? "View recipe" : "Find recipe"}
+                        </a>
                       </div>
                       {inLibrary && (
                         <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-accent-light/60 text-accent font-medium">

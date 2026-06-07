@@ -182,6 +182,7 @@ export default function MealPlanPage() {
             memory_story: extras.memory_story,
             memory_image_url: extras.memory_image_url,
             appliances: extras.appliances,
+            source_url: extras.source_url,
           });
           if (dish && extras.memoryImageFile) {
             const form = new FormData();
