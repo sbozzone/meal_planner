@@ -10,13 +10,14 @@ import {
   type IngredientCategory,
 } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { Camera, Plus, Sparkles, X } from "lucide-react";
+import { Camera, Link, Plus, Sparkles, X } from "lucide-react";
 
 export type DishFormExtras = {
   is_memory: boolean;
   memory_story: string | null;
   memory_image_url: string | null;
   appliances: string[];
+  source_url: string | null;
   memoryImageFile?: File | null;
 };
 
@@ -31,6 +32,7 @@ export function DishForm({
   initialMemoryStory,
   initialMemoryImageUrl,
   initialAppliances,
+  initialSourceUrl,
 }: {
   open: boolean;
   onClose: () => void;
@@ -47,6 +49,7 @@ export function DishForm({
   initialMemoryStory?: string | null;
   initialMemoryImageUrl?: string | null;
   initialAppliances?: string[];
+  initialSourceUrl?: string | null;
 }) {
   const [name, setName] = useState(initialName || "");
   const [tags, setTags] = useState<string[]>(initialTags || []);
@@ -63,6 +66,7 @@ export function DishForm({
   const [memoryImageUrl, setMemoryImageUrl] = useState(initialMemoryImageUrl || "");
   const [memoryImageFile, setMemoryImageFile] = useState<File | null>(null);
   const [appliances, setAppliances] = useState<string[]>(initialAppliances || []);
+  const [sourceUrl, setSourceUrl] = useState(initialSourceUrl || "");
 
   function togglePredefinedTag(value: string) {
     setTags((prev) =>
@@ -121,6 +125,7 @@ export function DishForm({
       memory_story: isMemory ? memoryStory.trim() || null : null,
       memory_image_url: isMemory ? memoryImageUrl || null : null,
       appliances,
+      source_url: sourceUrl.trim() || null,
       memoryImageFile,
     });
     setName("");
@@ -133,6 +138,7 @@ export function DishForm({
     setMemoryImageUrl("");
     setMemoryImageFile(null);
     setAppliances([]);
+    setSourceUrl("");
     setSaving(false);
     onClose();
   }
@@ -148,6 +154,7 @@ export function DishForm({
     setMemoryImageUrl(initialMemoryImageUrl || "");
     setMemoryImageFile(null);
     setAppliances(initialAppliances || []);
+    setSourceUrl(initialSourceUrl || "");
     onClose();
   }
 
@@ -169,6 +176,31 @@ export function DishForm({
             autoFocus
             maxLength={100}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            Recipe link
+          </label>
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="https://... (optional)"
+            value={sourceUrl}
+            onChange={(e) => setSourceUrl(e.target.value)}
+            className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm placeholder:text-text-muted"
+          />
+          {sourceUrl.trim() && (
+            <a
+              href={sourceUrl.trim()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            >
+              <Link className="w-3 h-3" />
+              Open recipe
+            </a>
+          )}
         </div>
 
         <div>

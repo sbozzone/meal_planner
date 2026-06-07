@@ -101,6 +101,7 @@ export default function DishesPage() {
       memory_story: extras.memory_story,
       memory_image_url: imageUrl,
       appliances: extras.appliances,
+      source_url: extras.source_url,
     };
 
     if (dish) {
@@ -311,6 +312,19 @@ export default function DishesPage() {
                     </div>
                   )}
                 </button>
+                {dish.source_url && (
+                  <a
+                    href={dish.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-2 rounded-lg text-text-muted hover:text-accent hover:bg-accent-light transition-colors shrink-0"
+                    aria-label={`View recipe for ${dish.name}`}
+                    title="View recipe"
+                  >
+                    <Link className="w-4 h-4" />
+                  </a>
+                )}
                 <button
                   onClick={() => handleEdit(dish)}
                   className="p-2 rounded-lg text-text-muted hover:text-accent hover:bg-accent-light transition-colors shrink-0"
@@ -353,19 +367,21 @@ export default function DishesPage() {
         initialMemoryStory={editingDish?.memory_story}
         initialMemoryImageUrl={editingDish?.memory_image_url}
         initialAppliances={editingDish?.appliances}
+        initialSourceUrl={editingDish?.source_url}
       />
 
       <ImportUrlSheet
         open={showImport}
         onClose={() => setShowImport(false)}
-        onSave={async (name, tags, ingredients) => {
-          await addDish(name, tags, ingredients);
+        onSave={async (name, tags, ingredients, sourceUrl) => {
+          await addDish(name, tags, ingredients, { source_url: sourceUrl });
         }}
       />
 
       <DishSuggestSheet
         open={showSuggest}
         familyId={family.id}
+        dishes={dishes}
         onClose={() => setShowSuggest(false)}
         onAdd={async (name, tags) => {
           await addDish(name, tags, []);

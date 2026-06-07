@@ -108,7 +108,8 @@ ${cleaned}
 Extract all ingredients with quantities, units, and grocery store category. If prep_time or cook_time aren't mentioned, use null. Default servings to 4 if not specified.`,
     });
 
-    return NextResponse.json(object);
+    // Include the original recipe URL so it can be saved with the dish.
+    return NextResponse.json({ ...object, source_url: url });
   } catch (err) {
     console.error("AI import-url error:", err);
     const isTimeout =

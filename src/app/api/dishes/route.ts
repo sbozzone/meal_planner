@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         name: body.name,
         tags: body.tags || [],
         ingredients: body.ingredients || [],
+        source_url: body.source_url || null,
         notes: body.notes || null,
         is_memory: Boolean(body.is_memory),
         memory_story: body.memory_story || null,

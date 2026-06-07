@@ -61,3 +61,9 @@ export function getMealEmoji(name: string): string | null {
   }
   return null;
 }
+
+// A web-search URL for finding a recipe by dish name. Used as a fallback when a
+// dish has no saved source_url (e.g. brand-new AI suggestions).
+export function recipeSearchUrl(name: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(`${name} recipe`)}`;
+}
