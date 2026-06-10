@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
-function decorateItem(item: Record<string, any>) {
+type PantryRow = Record<string, unknown> & {
+  quantity: number | string;
+  low_stock_threshold: number | string | null;
+  expiry_date: string | null;
+};
+
+function decorateItem(item: PantryRow) {
   const daysUntilExpiry = item.expiry_date
     ? Math.ceil((new Date(`${item.expiry_date}T00:00:00`).getTime() - Date.now()) / 86400000)
     : null;

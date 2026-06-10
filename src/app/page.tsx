@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Users } from "lucide-react";
 
@@ -96,11 +97,14 @@ export default function LandingPage() {
       <main className="min-h-dvh bg-[#1d1711] text-white">
         <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-black">
           {splashImages.map((image, index) => (
-            <img
+            <Image
               key={image.src}
               src={image.src}
               alt={image.alt}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+              fill
+              sizes="(max-width: 448px) 100vw, 448px"
+              priority={index === 0}
+              className={`object-cover transition-opacity duration-700 ${
                 index === splashIndex ? "opacity-100" : "opacity-0"
               }`}
             />

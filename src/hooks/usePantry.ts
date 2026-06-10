@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { PantryItem } from "@/types/database";
@@ -19,13 +19,13 @@ export function usePantry() {
   const { family } = useFamily();
   const [items, setItems] = useState<PantryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchItems = useCallback(async () => {
     const res = await fetch("/api/pantry", { headers });
     if (res.ok) setItems(await res.json());
     setLoading(false);
-  }, [family.id]);
+  }, [headers]);
 
   useEffect(() => {
     fetchItems();

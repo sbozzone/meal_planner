@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { DinnerActivity } from "@/types/database";
@@ -17,7 +17,7 @@ export function useDinnerActivities(weekStart: string) {
   const { family } = useFamily();
   const [activities, setActivities] = useState<DinnerActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchActivities = useCallback(async () => {
     setLoading(true);
@@ -28,7 +28,7 @@ export function useDinnerActivities(weekStart: string) {
       setActivities(await res.json());
     }
     setLoading(false);
-  }, [family.id, weekStart]);
+  }, [headers, weekStart]);
 
   useEffect(() => {
     fetchActivities();

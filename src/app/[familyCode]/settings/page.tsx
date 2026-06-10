@@ -145,7 +145,7 @@ export default function SettingsPage() {
             👨‍🍳 Family Chefs
           </h2>
           <p className="text-sm text-text-secondary mb-4">
-            Add names to quickly assign who's cooking each night.
+            Add names to quickly assign who&apos;s cooking each night.
           </p>
 
           {members.length > 0 && (
