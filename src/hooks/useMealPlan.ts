@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import { getWeekDays } from "@/lib/utils";
@@ -11,7 +11,7 @@ export function useMealPlan(weekStart: string) {
   const [meals, setMeals] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchMeals = useCallback(async () => {
     setLoading(true);
@@ -23,7 +23,7 @@ export function useMealPlan(weekStart: string) {
       setMeals(await res.json());
     }
     setLoading(false);
-  }, [family.id, weekStart]);
+  }, [headers, weekStart]);
 
   useEffect(() => {
     fetchMeals();

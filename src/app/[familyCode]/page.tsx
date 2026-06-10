@@ -292,7 +292,6 @@ export default function MealPlanPage() {
 
       <ChefPickerSheet
         open={chefDate !== null}
-        date={chefDate}
         currentChef={currentChefForDate}
         members={family.members ?? []}
         onClose={() => setChefDate(null)}

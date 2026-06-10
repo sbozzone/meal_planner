@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { MealTemplate, MealTemplateMeal } from "@/types/database";
@@ -9,13 +9,13 @@ export function useMealTemplates() {
   const { family } = useFamily();
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchTemplates = useCallback(async () => {
     const res = await fetch("/api/meal-templates", { headers });
     if (res.ok) setTemplates(await res.json());
     setLoading(false);
-  }, [family.id]);
+  }, [headers]);
 
   useEffect(() => {
     fetchTemplates();
@@ -32,7 +32,7 @@ export function useMealTemplates() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [family.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [family.id, fetchTemplates]);
 
   async function saveTemplate(name: string, description: string, meals: MealTemplateMeal[]) {
     const res = await fetch("/api/meal-templates", {

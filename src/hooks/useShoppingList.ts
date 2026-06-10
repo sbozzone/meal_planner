@@ -5,12 +5,26 @@ import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { ShoppingItem } from "@/types/database";
 
+const CATEGORY_ORDER = [
+  "Produce",
+  "Meat & Seafood",
+  "Dairy & Eggs",
+  "Bakery",
+  "Frozen",
+  "Pantry",
+  "Canned Goods",
+  "Condiments",
+  "Snacks",
+  "Beverages",
+  "Other",
+];
+
 export function useShoppingList() {
   const { family } = useFamily();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchItems = useCallback(async () => {
     const res = await fetch("/api/shopping", { headers });
@@ -18,7 +32,7 @@ export function useShoppingList() {
       setItems(await res.json());
     }
     setLoading(false);
-  }, [family.id]);
+  }, [headers]);
 
   useEffect(() => {
     fetchItems();
@@ -90,20 +104,6 @@ export function useShoppingList() {
     [items]
   );
 
-  const CATEGORY_ORDER = [
-    "Produce",
-    "Meat & Seafood",
-    "Dairy & Eggs",
-    "Bakery",
-    "Frozen",
-    "Pantry",
-    "Canned Goods",
-    "Condiments",
-    "Snacks",
-    "Beverages",
-    "Other",
-  ];
-
   const sortedCategories = useMemo(() => {
     const categories = items.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
       const cat = item.category || "Other";
@@ -116,7 +116,7 @@ export function useShoppingList() {
         (CATEGORY_ORDER.indexOf(a) === -1 ? 99 : CATEGORY_ORDER.indexOf(a)) -
         (CATEGORY_ORDER.indexOf(b) === -1 ? 99 : CATEGORY_ORDER.indexOf(b))
     );
-  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items]);
 
   return {
     items,

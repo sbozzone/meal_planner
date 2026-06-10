@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 export function ChefPickerSheet({
   open,
-  date,
   currentChef,
   members,
   onClose,
@@ -15,7 +14,6 @@ export function ChefPickerSheet({
   onClear,
 }: {
   open: boolean;
-  date: string | null;
   currentChef: string | null;
   members: string[];
   onClose: () => void;
@@ -62,7 +60,7 @@ export function ChefPickerSheet({
         {members.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-              Who's cooking tonight?
+              Who&apos;s cooking tonight?
             </p>
             <div className="flex flex-wrap gap-2">
               {members.map((name) => (
@@ -92,7 +90,7 @@ export function ChefPickerSheet({
           )}
           {members.length === 0 && (
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-              Who's cooking?
+              Who&apos;s cooking?
             </p>
           )}
           <div className="flex gap-2">

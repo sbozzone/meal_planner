@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import type { ChefAssignment } from "@/types/database";
 
@@ -9,14 +9,14 @@ export function useChefAssignments(weekStart: string) {
   const [assignments, setAssignments] = useState<ChefAssignment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchAssignments = useCallback(async () => {
     setLoading(true);
     const res = await fetch(`/api/chef?weekStart=${weekStart}`, { headers });
     if (res.ok) setAssignments(await res.json());
     setLoading(false);
-  }, [family.id, weekStart]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [headers, weekStart]);
 
   useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
-function cleanPatch(body: Record<string, any>) {
-  const patch: Record<string, any> = {};
+function cleanPatch(body: Record<string, unknown>) {
+  const patch: Record<string, unknown> = {};
   if (body.name !== undefined) patch.name = String(body.name).trim();
   if (body.quantity !== undefined) patch.quantity = Number(body.quantity);
   if (body.unit !== undefined) patch.unit = body.unit || "count";

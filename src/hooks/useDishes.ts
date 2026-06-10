@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import type { Dish, Ingredient } from "@/types/database";
@@ -10,7 +10,7 @@ export function useDishes() {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const headers = { "x-family-id": family.id };
+  const headers = useMemo(() => ({ "x-family-id": family.id }), [family.id]);
 
   const fetchDishes = useCallback(async () => {
     const res = await fetch("/api/dishes", { headers });
@@ -18,7 +18,7 @@ export function useDishes() {
       setDishes(await res.json());
     }
     setLoading(false);
-  }, [family.id]);
+  }, [headers]);
 
   useEffect(() => {
     fetchDishes();
