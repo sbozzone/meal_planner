@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { useWeekNavigation } from "@/hooks/useWeekNavigation";
 import { useFamily } from "@/lib/family-context";
 import { Plus, Trash2, ShoppingCart, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getCategoryEmoji } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Confetti } from "@/components/shared/Confetti";
 
 export default function ShoppingPage() {
   const { family } = useFamily();
@@ -52,6 +53,18 @@ export default function ShoppingPage() {
   const unchecked = useMemo(() => items.filter((it) => !it.is_checked), [items]);
   const checked = useMemo(() => items.filter((it) => it.is_checked), [items]);
   const hasCategories = sortedCategories.some(([cat]) => cat !== "Other");
+  const allDone = items.length > 0 && unchecked.length === 0;
+
+  // Fire confetti the moment the last item gets checked off
+  const [confettiBurst, setConfettiBurst] = useState(0);
+  const wasDoneRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (loading) return;
+    if (wasDoneRef.current === false && allDone) {
+      setConfettiBurst((b) => b + 1);
+    }
+    wasDoneRef.current = allDone;
+  }, [allDone, loading]);
 
   return (
     <>
@@ -101,6 +114,42 @@ export default function ShoppingPage() {
           </div>
         )}
 
+        {/* Shopping run progress */}
+        {!loading && items.length > 0 && (
+          <div
+            className={cn(
+              "animate-rise rounded-2xl border px-4 py-3 shadow-warm-sm transition-colors",
+              allDone ? "border-green/30 bg-green/10" : "border-border-light bg-card"
+            )}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                {allDone ? "🎉 Cart conquered!" : "Shopping run"}
+              </p>
+              <p
+                className={cn(
+                  "font-serif text-sm font-bold",
+                  allDone ? "text-green" : "text-accent-dark"
+                )}
+              >
+                {checked.length}
+                <span className="font-sans text-xs font-semibold text-text-muted">
+                  {" "}/ {items.length} in the cart
+                </span>
+              </p>
+            </div>
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-border/50">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500 ease-spring",
+                  allDone ? "bg-green" : "bg-accent-gradient"
+                )}
+                style={{ width: `${(checked.length / items.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -133,6 +182,7 @@ export default function ShoppingPage() {
                           ) : (
                             <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
                           )}
+                          <span aria-hidden>{getCategoryEmoji(cat)}</span>
                           <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                             {cat}
                           </span>
@@ -188,7 +238,7 @@ export default function ShoppingPage() {
                         className="w-6 h-6 rounded-full border-2 border-accent bg-accent flex items-center justify-center shrink-0"
                         aria-label={`Uncheck ${item.name}`}
                       >
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="w-3.5 h-3.5 text-white animate-check-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </button>
@@ -209,6 +259,8 @@ export default function ShoppingPage() {
           </>
         )}
       </div>
+
+      <Confetti burst={confettiBurst} />
     </>
   );
 }

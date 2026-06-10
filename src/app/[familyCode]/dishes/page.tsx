@@ -11,7 +11,7 @@ import { useDishes } from "@/hooks/useDishes";
 import { useFamily } from "@/lib/family-context";
 import { APPLIANCES, DISH_TAGS, type Dish } from "@/types/database";
 import { Plus, Search, Trash2, Pencil, Link, Sparkles, Wand2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, dishAvatarGradient, getMealEmoji } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -256,16 +256,26 @@ export default function DishesPage() {
           />
         ) : (
           <div className="space-y-2">
-            {filtered.map((dish) => (
+            {filtered.map((dish, index) => (
               <div
                 key={dish.id}
-                className="card-surface flex items-center gap-3 px-4 py-3 transition-shadow hover:shadow-warm"
+                className="card-surface animate-rise flex items-center gap-3 px-3.5 py-3 transition-shadow hover:shadow-warm"
+                style={{ animationDelay: `${Math.min(index, 10) * 35}ms` }}
               >
+                <button
+                  onClick={() => handleEdit(dish)}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl shadow-hairline transition-transform active:scale-90"
+                  style={{ background: dishAvatarGradient(dish.name) }}
+                  aria-hidden
+                  tabIndex={-1}
+                >
+                  {getMealEmoji(dish.name) ?? "🍽️"}
+                </button>
                 <button
                   onClick={() => handleEdit(dish)}
                   className="flex-1 min-w-0 text-left"
                 >
-                  <h3 className="font-medium text-sm text-text truncate">
+                  <h3 className="font-semibold text-sm text-text truncate">
                     {dish.name}
                   </h3>
                   {dish.tags.length > 0 && (
