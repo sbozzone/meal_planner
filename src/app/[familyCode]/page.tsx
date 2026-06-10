@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { WeekNavigation } from "@/components/meal-plan/WeekNavigation";
 import { DayCard } from "@/components/meal-plan/DayCard";
+import { TonightHero } from "@/components/meal-plan/TonightHero";
+import { WeekProgress } from "@/components/meal-plan/WeekProgress";
+import { Confetti } from "@/components/shared/Confetti";
 import { DishPicker } from "@/components/meal-plan/DishPicker";
 import { ActivitySheet } from "@/components/meal-plan/ActivitySheet";
 import { ChefPickerSheet } from "@/components/meal-plan/ChefPickerSheet";
@@ -48,7 +51,23 @@ export default function MealPlanPage() {
   const [showAddDish, setShowAddDish] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [confettiBurst, setConfettiBurst] = useState(0);
+  const prevPlannedRef = useRef<number | null>(null);
   const clearConfirm = useConfirmAction(clearWeek);
+
+  // Celebrate the moment the last empty night gets filled
+  const plannedCount = useMemo(
+    () => days.filter((d) => d.meals.length > 0).length,
+    [days]
+  );
+  useEffect(() => {
+    if (loading) return;
+    const prev = prevPlannedRef.current;
+    if (prev !== null && prev < days.length && plannedCount === days.length) {
+      setConfettiBurst((b) => b + 1);
+    }
+    prevPlannedRef.current = plannedCount;
+  }, [plannedCount, days.length, loading]);
 
   const daysWithAll = useMemo(
     () =>
@@ -94,6 +113,13 @@ export default function MealPlanPage() {
     ? (chefAssignments.find((c) => c.chef_date === chefDate)?.chef_name ?? null)
     : null;
 
+  const handleSurpriseMe = useCallback(async () => {
+    const today = daysWithAll.find((d) => d.isToday);
+    if (!today || dishes.length === 0) return;
+    const dish = dishes[Math.floor(Math.random() * dishes.length)];
+    await assignDish(today.date, dish.id);
+  }, [daysWithAll, dishes, assignDish]);
+
   return (
     <>
       <Header
@@ -126,22 +152,40 @@ export default function MealPlanPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {daysWithAll.map((day, i) => (
-              <DayCard
-                key={day.date}
-                day={day}
-                index={i}
-                onTapToAssign={handleTapToAssign}
-                onAddActivity={handleAddActivity}
-                onEditActivity={handleEditActivity}
-                onRemoveMeal={removeMeal}
-                onSetChef={setChefDate}
-                familyId={family.id}
-              />
-            ))}
+            <WeekProgress days={daysWithAll} onSelectDay={handleTapToAssign} />
+            {daysWithAll.map((day, i) =>
+              day.isToday ? (
+                <TonightHero
+                  key={day.date}
+                  day={day}
+                  familyId={family.id}
+                  onTapToAssign={handleTapToAssign}
+                  onAddActivity={handleAddActivity}
+                  onEditActivity={handleEditActivity}
+                  onRemoveMeal={removeMeal}
+                  onSetChef={setChefDate}
+                  onSurpriseMe={handleSurpriseMe}
+                  canSurprise={dishes.length > 0}
+                />
+              ) : (
+                <DayCard
+                  key={day.date}
+                  day={day}
+                  index={i}
+                  onTapToAssign={handleTapToAssign}
+                  onAddActivity={handleAddActivity}
+                  onEditActivity={handleEditActivity}
+                  onRemoveMeal={removeMeal}
+                  onSetChef={setChefDate}
+                  familyId={family.id}
+                />
+              )
+            )}
           </div>
         )}
       </main>
+
+      <Confetti burst={confettiBurst} />
 
       <PrintSheet
         familyName={family.name}

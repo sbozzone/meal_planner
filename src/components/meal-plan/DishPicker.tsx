@@ -5,7 +5,7 @@ import { Search, Plus, Sparkles, Loader2, ChevronLeft, ExternalLink } from "luci
 import { BottomSheet } from "@/components/shared/BottomSheet";
 import { DISH_TAGS, FUN_OPTIONS, type Dish } from "@/types/database";
 import { useFamily } from "@/lib/family-context";
-import { cn, recipeSearchUrl } from "@/lib/utils";
+import { cn, dishAvatarGradient, getMealEmoji, recipeSearchUrl } from "@/lib/utils";
 
 interface Suggestion {
   name: string;
@@ -305,8 +305,15 @@ export function DishPicker({
                       onSelect(dish);
                       onClose();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-card-header active:bg-border-light transition-colors text-left min-h-touch"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-card-header active:bg-border-light transition-colors text-left min-h-touch"
                   >
+                    <span
+                      aria-hidden
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg shadow-hairline"
+                      style={{ background: dishAvatarGradient(dish.name) }}
+                    >
+                      {getMealEmoji(dish.name) ?? "🍽️"}
+                    </span>
                     <span className="flex-1 font-medium text-sm text-text">
                       {dish.name}
                     </span>

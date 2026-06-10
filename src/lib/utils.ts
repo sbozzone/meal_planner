@@ -67,3 +67,41 @@ export function getMealEmoji(name: string): string | null {
 export function recipeSearchUrl(name: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(`${name} recipe`)}`;
 }
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  Produce: "🥬",
+  "Meat & Seafood": "🥩",
+  "Dairy & Eggs": "🥛",
+  Bakery: "🥖",
+  Frozen: "🧊",
+  Pantry: "🫙",
+  "Canned Goods": "🥫",
+  Condiments: "🧂",
+  Snacks: "🍿",
+  Beverages: "🧃",
+  Spices: "🌶️",
+  Other: "🛒",
+};
+
+export function getCategoryEmoji(category: string): string {
+  return CATEGORY_EMOJI[category] ?? "🛒";
+}
+
+// Warm gradient pairs for dish avatar tiles — hue picked by name hash so a
+// dish keeps the same tile color everywhere it appears.
+const AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #F7E0CB 0%, #F0C9A8 100%)",
+  "linear-gradient(135deg, #F3E3BC 0%, #E8CF94 100%)",
+  "linear-gradient(135deg, #DEEBD9 0%, #C2DBBA 100%)",
+  "linear-gradient(135deg, #D9E6EE 0%, #BAD2E0 100%)",
+  "linear-gradient(135deg, #F2DAD3 0%, #E6BCAE 100%)",
+  "linear-gradient(135deg, #EBE0F0 0%, #D5C4DF 100%)",
+];
+
+export function dishAvatarGradient(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
+}

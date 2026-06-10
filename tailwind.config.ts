@@ -80,11 +80,28 @@ const config: Config = {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        confetti: {
+          "0%": { transform: "translateY(-6vh) rotate(0deg)", opacity: "1" },
+          "85%": { opacity: "1" },
+          "100%": { transform: "translateY(106vh) rotate(640deg)", opacity: "0" },
+        },
+        "check-pop": {
+          "0%": { transform: "scale(0.4)" },
+          "60%": { transform: "scale(1.25)" },
+          "100%": { transform: "scale(1)" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-4deg)" },
+          "50%": { transform: "rotate(4deg)" },
+        },
       },
       animation: {
         rise: "rise 0.45s cubic-bezier(0.32, 0.72, 0, 1) both",
         "fade-in": "fade-in 0.3s ease both",
         "pop-in": "pop-in 0.25s cubic-bezier(0.32, 0.72, 0, 1) both",
+        confetti: "confetti 1.8s ease-in both",
+        "check-pop": "check-pop 0.3s cubic-bezier(0.32, 0.72, 0, 1) both",
+        wiggle: "wiggle 2.2s ease-in-out infinite",
       },
     },
   },

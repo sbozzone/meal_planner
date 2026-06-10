@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { PantryForm } from "@/components/pantry/PantryForm";
 import { usePantry } from "@/hooks/usePantry";
 import { useFamily } from "@/lib/family-context";
-import { cn } from "@/lib/utils";
+import { cn, getCategoryEmoji } from "@/lib/utils";
 import { Check, ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import type { PantryItem } from "@/types/database";
 import { Button } from "@/components/ui/Button";
@@ -97,6 +97,7 @@ export default function PantryPage() {
                     className="mb-2 flex min-h-touch items-center gap-2 px-1 text-left"
                   >
                     {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <span aria-hidden>{getCategoryEmoji(category)}</span>
                     <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
                       {category}
                     </span>
