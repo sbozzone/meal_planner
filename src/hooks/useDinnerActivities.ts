@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { DinnerActivity } from "@/types/database";
 
 export type DinnerActivityInput = {
@@ -33,6 +34,8 @@ export function useDinnerActivities(weekStart: string) {
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
+
+  useFamilyRefresh(fetchActivities);
 
   useEffect(() => {
     const supabase = createClient();

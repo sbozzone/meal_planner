@@ -39,7 +39,7 @@ export default function MealPlanPage() {
   } = useDinnerActivities(weekStart);
   const { assignments: chefAssignments, setChef, clearChef } =
     useChefAssignments(weekStart);
-  const { dishes, addDish } = useDishes();
+  const { dishes, addDish, refetch: refetchDishes } = useDishes();
   const { items } = useShoppingList();
 
   const [pickerDate, setPickerDate] = useState<string | null>(null);
@@ -224,9 +224,13 @@ export default function MealPlanPage() {
           const dish = await addDish(name, tags, ingredients, {
             is_memory: extras.is_memory,
             memory_story: extras.memory_story,
-            memory_image_url: extras.memory_image_url,
+            memory_image_url: extras.memoryImageFile ? null : extras.memory_image_url,
             appliances: extras.appliances,
             source_url: extras.source_url,
+            instructions: extras.instructions,
+            prep_time: extras.prep_time,
+            cook_time: extras.cook_time,
+            servings: extras.servings,
           });
           if (dish && extras.memoryImageFile) {
             const form = new FormData();
@@ -236,6 +240,7 @@ export default function MealPlanPage() {
               headers: { "x-family-id": family.id },
               body: form,
             });
+            await refetchDishes();
           }
           if (dish && pendingDate) {
             await assignDish(pendingDate, dish.id);

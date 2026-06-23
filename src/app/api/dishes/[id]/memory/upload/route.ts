@@ -35,14 +35,18 @@ export async function POST(
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    const { data: publicUrl } = supabase.storage
+    const { data: signedUrl, error: signedUrlError } = await supabase.storage
       .from("family-memories")
-      .getPublicUrl(path);
+      .createSignedUrl(path, 60 * 60);
 
-    const memoryImageUrl = publicUrl.publicUrl;
+    if (signedUrlError || !signedUrl) {
+      return NextResponse.json({ error: "Could not prepare the uploaded image" }, { status: 500 });
+    }
+
+    const memoryImageUrl = signedUrl.signedUrl;
     const { error: updateError } = await supabase
       .from("dishes")
-      .update({ memory_image_url: memoryImageUrl })
+      .update({ memory_image_path: path, memory_image_url: null })
       .eq("id", id)
       .eq("family_id", familyId);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { Dish, Ingredient } from "@/types/database";
 
 export function useDishes() {
@@ -23,6 +24,8 @@ export function useDishes() {
   useEffect(() => {
     fetchDishes();
   }, [fetchDishes]);
+
+  useFamilyRefresh(fetchDishes);
 
   // Realtime subscription
   useEffect(() => {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Lora, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
+import { ServiceWorkerRegistration } from "@/components/shared/ServiceWorkerRegistration";
 
 const lora = Lora({
   subsets: ["latin"],
@@ -52,7 +53,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ServiceWorkerRegistration />
+      </body>
     </html>
   );
 }

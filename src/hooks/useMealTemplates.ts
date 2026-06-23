@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { MealTemplate, MealTemplateMeal } from "@/types/database";
 
 export function useMealTemplates() {
@@ -20,6 +21,8 @@ export function useMealTemplates() {
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
+
+  useFamilyRefresh(fetchTemplates);
 
   useEffect(() => {
     const supabase = createClient();

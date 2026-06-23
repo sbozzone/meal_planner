@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useId, useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,10 @@ export function BottomSheet({
   className?: string;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const titleId = useId();
   const dragStartY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
   // Space taken up by the on-screen keyboard, so we can lift the sheet above it.
@@ -31,6 +35,50 @@ export function BottomSheet({
     }
     return () => {
       document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab" || !sheetRef.current) return;
+      const focusable = Array.from(
+        sheetRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocusedRef.current?.focus();
     };
   }, [open]);
 
@@ -88,9 +136,13 @@ export function BottomSheet({
       <div
         className="absolute inset-0 bg-black/35"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={cn(
           "absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[85dvh] flex flex-col animate-slide-up transition-transform",
           className
@@ -113,11 +165,14 @@ export function BottomSheet({
           <div className="w-10 h-1 rounded-full bg-border mb-2" />
         </div>
         <div className="flex items-center justify-between px-5 pb-3 border-b border-border-light shrink-0">
-          <h3 className="font-serif text-lg font-semibold text-text">
+          <h3 id={titleId} className="font-serif text-lg font-semibold text-text">
             {title}
           </h3>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
+            type="button"
+            aria-label={`Close ${title}`}
             className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-card-header transition-colors min-h-touch min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />

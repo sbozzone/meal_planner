@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function DishesPage() {
   const { family } = useFamily();
-  const { dishes, loading, addDish, updateDish, deleteDish } = useDishes();
+  const { dishes, loading, addDish, updateDish, deleteDish, refetch } = useDishes();
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
@@ -90,31 +90,34 @@ export default function DishesPage() {
     extras: DishFormExtras,
     dish?: Dish | null
   ) {
-    const imageUrl = extras.memoryImageFile && dish
-      ? await uploadMemoryPhoto(dish.id, extras.memoryImageFile)
-      : extras.memory_image_url;
     const payload = {
       name,
       tags,
       ingredients,
       is_memory: extras.is_memory,
       memory_story: extras.memory_story,
-      memory_image_url: imageUrl,
+      memory_image_url: extras.memoryImageFile ? null : extras.memory_image_url,
       appliances: extras.appliances,
       source_url: extras.source_url,
+      instructions: extras.instructions,
+      prep_time: extras.prep_time,
+      cook_time: extras.cook_time,
+      servings: extras.servings,
     };
 
     if (dish) {
       await updateDish(dish.id, payload);
+      if (extras.memoryImageFile) {
+        await uploadMemoryPhoto(dish.id, extras.memoryImageFile);
+        await refetch();
+      }
       return;
     }
 
     const created = await addDish(name, tags, ingredients, payload);
     if (created && extras.memoryImageFile) {
-      const uploadedUrl = await uploadMemoryPhoto(created.id, extras.memoryImageFile);
-      if (uploadedUrl) {
-        await updateDish(created.id, { memory_image_url: uploadedUrl });
-      }
+      await uploadMemoryPhoto(created.id, extras.memoryImageFile);
+      await refetch();
     }
   }
 
@@ -378,13 +381,20 @@ export default function DishesPage() {
         initialMemoryImageUrl={editingDish?.memory_image_url}
         initialAppliances={editingDish?.appliances}
         initialSourceUrl={editingDish?.source_url}
+        initialInstructions={editingDish?.instructions}
+        initialPrepTime={editingDish?.prep_time}
+        initialCookTime={editingDish?.cook_time}
+        initialServings={editingDish?.servings}
       />
 
       <ImportUrlSheet
         open={showImport}
         onClose={() => setShowImport(false)}
-        onSave={async (name, tags, ingredients, sourceUrl) => {
-          await addDish(name, tags, ingredients, { source_url: sourceUrl });
+        onSave={async (name, tags, ingredients, sourceUrl, recipeDetails) => {
+          await addDish(name, tags, ingredients, {
+            source_url: sourceUrl,
+            ...recipeDetails,
+          });
         }}
       />
 

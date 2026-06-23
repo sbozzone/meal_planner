@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { PantryItem } from "@/types/database";
 
 export type PantryInput = {
@@ -30,6 +31,8 @@ export function usePantry() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useFamilyRefresh(fetchItems);
 
   useEffect(() => {
     const supabase = createClient();
