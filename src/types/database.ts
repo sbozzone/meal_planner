@@ -126,6 +126,7 @@ export interface Dish {
   is_memory: boolean;
   memory_story: string | null;
   memory_image_url: string | null;
+  memory_image_path?: string | null;
   appliances: string[];
   created_at: string;
   updated_at: string;

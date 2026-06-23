@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
 import { getWeekDays } from "@/lib/utils";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { MealPlan, DayPlan } from "@/types/database";
 
 export function useMealPlan(weekStart: string) {
@@ -28,6 +29,8 @@ export function useMealPlan(weekStart: string) {
   useEffect(() => {
     fetchMeals();
   }, [fetchMeals]);
+
+  useFamilyRefresh(fetchMeals);
 
   // Realtime subscription
   useEffect(() => {

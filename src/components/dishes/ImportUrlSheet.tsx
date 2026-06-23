@@ -30,7 +30,11 @@ export function ImportUrlSheet({
     name: string,
     tags: string[],
     ingredients: Ingredient[],
-    sourceUrl: string | null
+    sourceUrl: string | null,
+    recipeDetails: Pick<
+      ExtractedRecipe,
+      "instructions" | "prep_time" | "cook_time" | "servings"
+    >
   ) => Promise<void>;
 }) {
   const { family } = useFamily();
@@ -91,7 +95,18 @@ export function ImportUrlSheet({
   async function handleSave() {
     if (!recipe || !editedName.trim()) return;
     setSaving(true);
-    await onSave(editedName.trim(), recipe.tags, recipe.ingredients, recipe.source_url || null);
+    await onSave(
+      editedName.trim(),
+      recipe.tags,
+      recipe.ingredients,
+      recipe.source_url || null,
+      {
+        instructions: recipe.instructions,
+        prep_time: recipe.prep_time,
+        cook_time: recipe.cook_time,
+        servings: recipe.servings,
+      }
+    );
     setSaving(false);
     onClose();
     reset();

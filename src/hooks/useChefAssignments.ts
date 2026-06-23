@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { ChefAssignment } from "@/types/database";
 
 export function useChefAssignments(weekStart: string) {
@@ -19,6 +20,8 @@ export function useChefAssignments(weekStart: string) {
   }, [headers, weekStart]);
 
   useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
+
+  useFamilyRefresh(fetchAssignments);
 
   async function setChef(date: string, name: string) {
     const res = await fetch("/api/chef", {

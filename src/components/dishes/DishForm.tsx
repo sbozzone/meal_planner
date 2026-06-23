@@ -18,6 +18,10 @@ export type DishFormExtras = {
   memory_image_url: string | null;
   appliances: string[];
   source_url: string | null;
+  instructions: string | null;
+  prep_time: number | null;
+  cook_time: number | null;
+  servings: number;
   memoryImageFile?: File | null;
 };
 
@@ -33,6 +37,10 @@ export function DishForm({
   initialMemoryImageUrl,
   initialAppliances,
   initialSourceUrl,
+  initialInstructions,
+  initialPrepTime,
+  initialCookTime,
+  initialServings,
 }: {
   open: boolean;
   onClose: () => void;
@@ -50,6 +58,10 @@ export function DishForm({
   initialMemoryImageUrl?: string | null;
   initialAppliances?: string[];
   initialSourceUrl?: string | null;
+  initialInstructions?: string | null;
+  initialPrepTime?: number | null;
+  initialCookTime?: number | null;
+  initialServings?: number | null;
 }) {
   const [name, setName] = useState(initialName || "");
   const [tags, setTags] = useState<string[]>(initialTags || []);
@@ -67,6 +79,10 @@ export function DishForm({
   const [memoryImageFile, setMemoryImageFile] = useState<File | null>(null);
   const [appliances, setAppliances] = useState<string[]>(initialAppliances || []);
   const [sourceUrl, setSourceUrl] = useState(initialSourceUrl || "");
+  const [instructions, setInstructions] = useState(initialInstructions || "");
+  const [prepTime, setPrepTime] = useState(initialPrepTime?.toString() || "");
+  const [cookTime, setCookTime] = useState(initialCookTime?.toString() || "");
+  const [servings, setServings] = useState(initialServings?.toString() || "4");
 
   function togglePredefinedTag(value: string) {
     setTags((prev) =>
@@ -126,6 +142,10 @@ export function DishForm({
       memory_image_url: isMemory ? memoryImageUrl || null : null,
       appliances,
       source_url: sourceUrl.trim() || null,
+      instructions: instructions.trim() || null,
+      prep_time: prepTime.trim() ? Number(prepTime) : null,
+      cook_time: cookTime.trim() ? Number(cookTime) : null,
+      servings: Number(servings) > 0 ? Number(servings) : 4,
       memoryImageFile,
     });
     setName("");
@@ -139,6 +159,10 @@ export function DishForm({
     setMemoryImageFile(null);
     setAppliances([]);
     setSourceUrl("");
+    setInstructions("");
+    setPrepTime("");
+    setCookTime("");
+    setServings("4");
     setSaving(false);
     onClose();
   }
@@ -155,6 +179,10 @@ export function DishForm({
     setMemoryImageFile(null);
     setAppliances(initialAppliances || []);
     setSourceUrl(initialSourceUrl || "");
+    setInstructions(initialInstructions || "");
+    setPrepTime(initialPrepTime?.toString() || "");
+    setCookTime(initialCookTime?.toString() || "");
+    setServings(initialServings?.toString() || "4");
     onClose();
   }
 
@@ -201,6 +229,55 @@ export function DishForm({
               Open recipe
             </a>
           )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <label className="block text-sm font-medium text-text-secondary">
+            Prep (min)
+            <input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              value={prepTime}
+              onChange={(e) => setPrepTime(e.target.value)}
+              className="mt-1.5 w-full px-3 py-2.5 bg-bg border border-border rounded-lg text-sm"
+            />
+          </label>
+          <label className="block text-sm font-medium text-text-secondary">
+            Cook (min)
+            <input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              value={cookTime}
+              onChange={(e) => setCookTime(e.target.value)}
+              className="mt-1.5 w-full px-3 py-2.5 bg-bg border border-border rounded-lg text-sm"
+            />
+          </label>
+          <label className="block text-sm font-medium text-text-secondary">
+            Serves
+            <input
+              type="number"
+              min="1"
+              inputMode="numeric"
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
+              className="mt-1.5 w-full px-3 py-2.5 bg-bg border border-border rounded-lg text-sm"
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            Instructions
+          </label>
+          <textarea
+            placeholder="Add the cooking steps or keep this dish as a quick reference."
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            rows={6}
+            className="w-full px-4 py-3 bg-bg border border-border rounded-lg text-sm leading-6 placeholder:text-text-muted"
+          />
         </div>
 
         <div>

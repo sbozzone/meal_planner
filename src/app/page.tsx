@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
+  Users,
+} from "lucide-react";
 
 const splashImages = [
   {
@@ -32,6 +40,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"home" | "create" | "join">("home");
   const [splashIndex, setSplashIndex] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
   const [familyName, setFamilyName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,12 +53,18 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    if (mode !== "home") return;
+    if (
+      mode !== "home" ||
+      isCarouselPaused ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
     const id = window.setInterval(() => {
       setSplashIndex((current) => (current + 1) % splashImages.length);
     }, 4500);
     return () => window.clearInterval(id);
-  }, [mode]);
+  }, [mode, isCarouselPaused]);
 
   async function handleCreate() {
     if (!familyName.trim()) return;
@@ -95,12 +110,18 @@ export default function LandingPage() {
   if (mode === "home") {
     return (
       <main className="min-h-dvh bg-[#1d1711] text-white">
-        <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-black">
+        <div
+          className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-black"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Family DinnerTime artwork"
+        >
           {splashImages.map((image, index) => (
             <Image
               key={image.src}
               src={image.src}
-              alt={image.alt}
+              alt={index === splashIndex ? image.alt : ""}
+              aria-hidden={index !== splashIndex}
               fill
               sizes="(max-width: 448px) 100vw, 448px"
               priority={index === 0}
@@ -109,6 +130,9 @@ export default function LandingPage() {
               }`}
             />
           ))}
+          <p className="sr-only" aria-live="polite">
+            Splash image {splashIndex + 1} of {splashImages.length}
+          </p>
           {!hasFamily && <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/85" />}
 
           {hasFamily && (
@@ -132,10 +156,13 @@ export default function LandingPage() {
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur"
                 type="button"
                 onClick={() =>
-                  setSplashIndex(
-                    (current) =>
-                      (current - 1 + splashImages.length) % splashImages.length
-                  )
+                  {
+                    setIsCarouselPaused(true);
+                    setSplashIndex(
+                      (current) =>
+                        (current - 1 + splashImages.length) % splashImages.length
+                    );
+                  }
                 }
                 aria-label="Previous splash image"
               >
@@ -151,17 +178,35 @@ export default function LandingPage() {
                         : "w-2.5 bg-white/45"
                     }`}
                     type="button"
-                    onClick={() => setSplashIndex(index)}
+                    onClick={() => {
+                      setIsCarouselPaused(true);
+                      setSplashIndex(index);
+                    }}
                     aria-label={`Show splash image ${index + 1}`}
+                    aria-current={index === splashIndex ? "true" : undefined}
                   />
                 ))}
+                <button
+                  className="ml-1 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur"
+                  type="button"
+                  onClick={() => setIsCarouselPaused((paused) => !paused)}
+                  aria-label={isCarouselPaused ? "Play splash carousel" : "Pause splash carousel"}
+                  aria-pressed={isCarouselPaused}
+                >
+                  {isCarouselPaused ? (
+                    <Play className="h-4 w-4" />
+                  ) : (
+                    <Pause className="h-4 w-4" />
+                  )}
+                </button>
               </div>
               <button
                 className="flex h-11 w-11 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur"
                 type="button"
-                onClick={() =>
-                  setSplashIndex((current) => (current + 1) % splashImages.length)
-                }
+                onClick={() => {
+                  setIsCarouselPaused(true);
+                  setSplashIndex((current) => (current + 1) % splashImages.length);
+                }}
                 aria-label="Next splash image"
               >
                 <ChevronRight className="h-5 w-5" />

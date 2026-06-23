@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFamily } from "@/lib/family-context";
 import { createClient } from "@/lib/supabase/client";
+import { useFamilyRefresh } from "@/hooks/useFamilyRefresh";
 import type { ShoppingItem } from "@/types/database";
 
 const CATEGORY_ORDER = [
@@ -37,6 +38,8 @@ export function useShoppingList() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useFamilyRefresh(fetchItems);
 
   // Realtime subscription
   useEffect(() => {

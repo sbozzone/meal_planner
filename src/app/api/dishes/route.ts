@@ -18,7 +18,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  const dishesWithSignedMemoryUrls = await Promise.all(
+    (data || []).map(async (dish) => {
+      if (!dish.memory_image_path) return dish;
+      const { data: signed } = await supabase.storage
+        .from("family-memories")
+        .createSignedUrl(dish.memory_image_path, 60 * 60);
+      return { ...dish, memory_image_url: signed?.signedUrl || null };
+    })
+  );
+
+  return NextResponse.json(dishesWithSignedMemoryUrls);
 }
 
 export async function POST(request: NextRequest) {
@@ -40,6 +50,22 @@ export async function POST(request: NextRequest) {
         ingredients: body.ingredients || [],
         source_url: body.source_url || null,
         notes: body.notes || null,
+        instructions:
+          typeof body.instructions === "string" && body.instructions.trim()
+            ? body.instructions.trim()
+            : null,
+        prep_time:
+          Number.isFinite(Number(body.prep_time)) && Number(body.prep_time) >= 0
+            ? Number(body.prep_time)
+            : null,
+        cook_time:
+          Number.isFinite(Number(body.cook_time)) && Number(body.cook_time) >= 0
+            ? Number(body.cook_time)
+            : null,
+        servings:
+          Number.isFinite(Number(body.servings)) && Number(body.servings) > 0
+            ? Number(body.servings)
+            : 4,
         is_memory: Boolean(body.is_memory),
         memory_story: body.memory_story || null,
         memory_image_url: body.memory_image_url || null,
